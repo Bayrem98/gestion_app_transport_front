@@ -65,6 +65,10 @@ const AffectationForm: React.FC<{
           <option value={8}>8h</option>
           <option value={22}>22h</option>
           <option value={23}>23h</option>
+          <option value={0}>00h</option>
+          <option value={1}>01h</option>
+          <option value={2}>02h</option>
+          <option value={3}>03h</option>
         </select>
       </div>
 
