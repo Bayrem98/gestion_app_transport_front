@@ -6,9 +6,11 @@ import { GestionAgents } from './pages/GestionAgents';
 import { GestionChauffeurs } from './pages/GestionChauffeurs';
 import { Rapports } from './pages/Rapports';
 import './App.css';
+import { PlanningProvider } from './pages/PlanningContext';
 
 function App() {
   return (
+    <PlanningProvider>
     <Router>
       <div className="app">
         <Navigation />
@@ -22,6 +24,7 @@ function App() {
         </main>
       </div>
     </Router>
+    </PlanningProvider>
   );
 }
 

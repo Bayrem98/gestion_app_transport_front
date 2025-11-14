@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Agent, Affectation, PlanningData } from '../@types/shared';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -75,6 +75,23 @@ export class TransportApiService {
     const response = await api.get(`/affectations/statistiques/mensuelles?${params}`);
     return response.data;
   }
+
+ // Dans la classe TransportApiService
+static async filtrerAgentsPlanning(
+  jour: string, 
+  typeTransport: 'Ramassage' | 'Départ'
+): Promise<string[]> {
+  const response = await api.post<string[]>('/planning/filtrer-agents', {
+    jour,
+    typeTransport
+  });
+  return response.data;
+}
+
+static async updateAffectation(id: string, affectation: Partial<Affectation>): Promise<Affectation> {
+  const response = await api.put<Affectation>(`/affectations/${id}`, affectation);
+  return response.data;
+}
 }
 
 export default api;

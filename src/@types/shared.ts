@@ -46,6 +46,11 @@ export interface PlanningData {
   Qualification: string;
 }
 
+export interface PlanningContextType {
+  planningData: PlanningData[];
+  setPlanningData: (data: PlanningData[]) => void;
+}
+
 export interface StatistiquesMensuelles {
   periode: string;
   totalCourses: number;
