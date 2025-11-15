@@ -11,14 +11,18 @@ export interface Agent {
   createdAt?: string;
 }
 
-export interface Affectation {
-  _id?: string;
-  chauffeur: string;
-  heure: number;
+export interface AgentAffectation {
   agentNom: string;
   adresse: string;
   telephone: string;
   societe: string;
+}
+
+export interface Affectation {
+  _id?: string;
+  chauffeur: string;
+  heure: number;
+  agents: AgentAffectation[];
   vehicule: string;
   typeTransport: 'Ramassage' | 'Départ';
   jour: string;
