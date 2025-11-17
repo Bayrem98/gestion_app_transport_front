@@ -13,6 +13,12 @@ export interface ApiResponse<T> {
 }
 
 export class TransportApiService {
+
+  static async getAgentByNom(nom: string): Promise<Agent> {
+  const response = await api.get<Agent>(`/agents/nom/${encodeURIComponent(nom)}`);
+  return response.data;
+}
+
   // Agents
   static async getAgents(): Promise<Agent[]> {
     const response = await api.get<Agent[]>('/agents');

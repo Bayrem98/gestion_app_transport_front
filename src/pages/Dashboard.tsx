@@ -85,7 +85,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h1>🚗 Gestionnaire de Transport Professionnel</h1>
+        <h1>Gestionnaire de Transport Professionnel</h1>
         <p className="dashboard-subtitle">
           Importez votre planning Excel et gérez les transports de vos agents
         </p>

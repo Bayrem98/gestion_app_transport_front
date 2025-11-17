@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { TransportApiService } from '../services/api';
 import { Agent } from '../@types/shared';
 import './GestionAgents.css';
 
 export const GestionAgents: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -13,6 +16,30 @@ export const GestionAgents: React.FC = () => {
   useEffect(() => {
     loadAgents();
   }, []);
+
+  useEffect(() => {
+    // Vérifier si on doit ouvrir le formulaire d'édition depuis l'URL
+    const urlParams = new URLSearchParams(location.search);
+    const editAgentId = urlParams.get('edit');
+    const returnTo = urlParams.get('returnTo');
+    
+    if (editAgentId && agents.length > 0) {
+      // Trouver l'agent à éditer
+      const agentToEdit = agents.find(agent => agent._id === editAgentId);
+      if (agentToEdit) {
+        setEditingAgent(agentToEdit);
+        setShowForm(true);
+        
+        // Faire défiler jusqu'au formulaire
+        setTimeout(() => {
+          const formElement = document.querySelector('.agent-form-container');
+          if (formElement) {
+            formElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    }
+  }, [location.search, agents]);
 
   const loadAgents = async () => {
     try {
@@ -43,23 +70,40 @@ export const GestionAgents: React.FC = () => {
     try {
       if (editingAgent) {
         await TransportApiService.updateAgent(editingAgent._id!, agentData);
+        alert('✅ Agent mis à jour avec succès !');
       } else {
         await TransportApiService.createAgent(agentData);
+        alert('✅ Agent créé avec succès !');
       }
       await loadAgents();
       setShowForm(false);
       setEditingAgent(null);
+      
+      // Vérifier si on doit retourner à la page d'import
+      const urlParams = new URLSearchParams(location.search);
+      const returnTo = urlParams.get('returnTo');
+      
+      if (returnTo === 'import') {
+        // Retourner à la page d'import
+        navigate('/import-agents');
+      } else {
+        // Nettoyer l'URL après sauvegarde réussie
+        navigate('/agents', { replace: true });
+      }
+      
       // Reset form
       e.currentTarget.reset();
     } catch (error) {
       console.error('Erreur sauvegarde agent:', error);
-      alert('Erreur lors de la sauvegarde');
+      alert('❌ Erreur lors de la sauvegarde');
     }
   };
 
   const handleEdit = (agent: Agent) => {
     setEditingAgent(agent);
     setShowForm(true);
+    // Mettre à jour l'URL pour refléter l'édition
+    navigate(`/agents?edit=${agent._id}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -67,11 +111,34 @@ export const GestionAgents: React.FC = () => {
       try {
         await TransportApiService.deleteAgent(id);
         await loadAgents();
+        alert('✅ Agent supprimé avec succès !');
       } catch (error) {
         console.error('Erreur suppression agent:', error);
-        alert('Erreur lors de la suppression');
+        alert('❌ Erreur lors de la suppression');
       }
     }
+  };
+
+  const handleCancelEdit = () => {
+    setShowForm(false);
+    setEditingAgent(null);
+    
+    // Vérifier si on doit retourner à la page d'import
+    const urlParams = new URLSearchParams(location.search);
+    const returnTo = urlParams.get('returnTo');
+    
+    if (returnTo === 'import') {
+      // Retourner à la page d'import
+      navigate('/import-agents');
+    } else {
+      // Nettoyer l'URL lors de l'annulation
+      navigate('/agents', { replace: true });
+    }
+  };
+
+  // Bouton pour retourner à l'import
+  const handleReturnToImport = () => {
+    navigate('/import-agents');
   };
 
   const filteredAgents = agents.filter(agent =>
@@ -88,12 +155,28 @@ export const GestionAgents: React.FC = () => {
     <div className="gestion-agents">
       <div className="agents-header">
         <h1>👤 Gestion des Agents</h1>
-        <button 
-          className="btn-primary"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? '❌ Annuler' : '➕ Ajouter un agent'}
-        </button>
+        <div className="header-actions">
+          {location.search.includes('returnTo=import') && (
+            <button 
+              className="btn-secondary"
+              onClick={handleReturnToImport}
+            >
+              ↩️ Retour à l'import
+            </button>
+          )}
+          <button 
+            className="btn-primary"
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditingAgent(null);
+              if (showForm) {
+                navigate('/agents', { replace: true });
+              }
+            }}
+          >
+            {showForm ? '❌ Annuler' : '➕ Ajouter un agent'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -186,10 +269,7 @@ export const GestionAgents: React.FC = () => {
               <button 
                 type="button" 
                 className="btn-secondary"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingAgent(null);
-                }}
+                onClick={handleCancelEdit}
               >
                 ❌ Annuler
               </button>

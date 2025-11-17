@@ -29,6 +29,14 @@ export const Navigation: React.FC = () => {
         </li>
         <li>
           <Link 
+            to="/import-agents" 
+            className={location.pathname === '/import-agents' ? 'active' : ''}
+          >
+            📄 Import-Agents
+          </Link>
+        </li>
+        <li>
+          <Link 
             to="/chauffeurs" 
             className={location.pathname === '/chauffeurs' ? 'active' : ''}
           >
