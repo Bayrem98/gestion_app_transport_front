@@ -109,10 +109,10 @@ export const ImportAgents: React.FC = () => {
     try {
       const agents = await TransportApiService.getAgents();
       setAgentsExistants(agents);
-      // Forcer le recalcul après chargement des agents
+      // Forcer le recalcul après chargement des Salariés
       setForceUpdate(prev => prev + 1);
     } catch (error) {
-      console.error('Erreur chargement agents existants:', error);
+      console.error('Erreur chargement Salariés existants:', error);
     }
   };
 
@@ -120,7 +120,7 @@ export const ImportAgents: React.FC = () => {
     return agentsExistants.find(agent => agent.nom === nom);
   };
 
-  // Fonction pour vérifier les données manquantes (version corrigée)
+  // Fonction pour vérifier les données manquantes
   const verifierDonneesManquantes = (agent: AgentFiltre): boolean => {
     // Vérifier si les champs sont vides ou contiennent "Non"
     const adresseManquante = !agent.adresse || 
@@ -160,7 +160,7 @@ export const ImportAgents: React.FC = () => {
       setAgentsData(agentsFromPlanning);
       setImported(true);
       
-      alert(`✅ Fichier importé avec succès !\n${data.length} plannings chargés\n${agentsFromPlanning.length} agents extraits`);
+      alert(`✅ Fichier importé avec succès !\n${data.length} plannings chargés\n${agentsFromPlanning.length} Salariés extraits`);
     } catch (error) {
       console.error('Erreur lors de l\'import du fichier:', error);
       alert('❌ Erreur lors de l\'import du fichier');
@@ -278,7 +278,7 @@ export const ImportAgents: React.FC = () => {
   // Debug useEffect pour voir l'état après sauvegarde - PLACÉ APRÈS LA DÉCLARATION DE agentsFiltres
   useEffect(() => {
     if (agentsFiltres.length > 0) {
-      console.log('=== ÉTAT ACTUEL DES AGENTS ===');
+      console.log('=== État actuel des Salariés ===');
       agentsFiltres.forEach(agent => {
         const statut = verifierDonneesManquantes(agent) ? 'À COMPLÉTER' : 'COMPLET';
         console.log(`${agent.nom}: ${statut}`, {
@@ -336,12 +336,12 @@ export const ImportAgents: React.FC = () => {
           <body>
             <div class="print-header">
               <h1>${filtres.typeTransport}</h1>
-              <p class="subtitle">Jour: ${filtres.jour} | Total: ${agentsFiltres.length} agents</p>
+              <p class="subtitle">Jour: ${filtres.jour} | Total: ${agentsFiltres.length} salariés</p>
             </div>
             <table class="print-table">
               <thead>
                 <tr>
-                  <th>Nom</th>
+                  <th>Salarié</th>
                   <th>Heure ${filtres.typeTransport === 'Ramassage' ? 'Début' : 'Fin'}</th>
                   <th>Adresse</th>
                   <th>Société</th>
@@ -389,7 +389,7 @@ export const ImportAgents: React.FC = () => {
     const agentsASauvegarder = agentsFiltres.filter(agent => !agent._id);
 
     if (agentsASauvegarder.length === 0) {
-      alert('✅ Tous les agents sont déjà dans la base de données !');
+      alert('✅ Tous les salariés sont déjà dans la base de données !');
       return;
     }
 
@@ -412,7 +412,7 @@ export const ImportAgents: React.FC = () => {
 
         // Vérifier que le nom n'est pas vide
         if (!agentToSave.nom || agentToSave.nom.trim() === '') {
-          console.warn(`Nom d'agent vide pour: ${agent.nom}`);
+          console.warn(`Nom du salarié vide pour: ${agent.nom}`);
           continue;
         }
 
@@ -436,7 +436,7 @@ export const ImportAgents: React.FC = () => {
         
         // Si c'est une erreur de duplication, on continue
         if (error.response?.status === 400 || error.response?.status === 409) {
-          console.warn(`Agent ${agent.nom} existe peut-être déjà`);
+          console.warn(`Salarié ${agent.nom} existe peut-être déjà`);
         }
       }
     }
@@ -445,14 +445,14 @@ export const ImportAgents: React.FC = () => {
     await chargerAgentsExistants();
     
     if (erreurs > 0) {
-      alert(`✅ ${sauvegardes} agents sauvegardés, ❌ ${erreurs} erreurs.\nVérifiez la console pour les détails.`);
+      alert(`✅ ${sauvegardes} Salarié sauvegardés, ❌ ${erreurs} erreurs.\nVérifiez la console pour les détails.`);
     } else {
-      alert(`✅ ${sauvegardes} agents sauvegardés avec succès !\nLes agents avec des données manquantes restent "À compléter".`);
+      alert(`✅ ${sauvegardes} Salarié sauvegardés avec succès !\nLes salariés avec des données manquantes restent "À compléter".`);
     }
     
   } catch (error) {
-    console.error('Erreur générale sauvegarde agents:', error);
-    alert('❌ Erreur lors de la sauvegarde des agents. Vérifiez la console.');
+    console.error('Erreur générale sauvegarde salariés:', error);
+    alert('❌ Erreur lors de la sauvegarde des salariés. Vérifiez la console.');
   }
 };
 
@@ -501,7 +501,7 @@ export const ImportAgents: React.FC = () => {
   };
 
   const convertToCSV = (data: AgentFiltre[]): string => {
-    const headers = ['Nom', 'Heure', 'Adresse', 'Telephone', 'Societe', 'Jour', 'Statut'];
+    const headers = ['Nom', 'Heure', 'Adresse', 'Telephone', 'Societe'];
     const csvRows = [headers.join(';')];
     
     data.forEach(agent => {
@@ -512,8 +512,6 @@ export const ImportAgents: React.FC = () => {
         `"${agent.adresse}"`,
         agent.telephone,
         agent.societe,
-        filtres.jour,
-        statut
       ];
       csvRows.push(row.join(';'));
     });
@@ -543,12 +541,13 @@ export const ImportAgents: React.FC = () => {
           <p className="hero-subtitle">
            Filtrez les plannings pour optimiser vos Départ et Ramassage
           </p>
+          <br />
           {imported && (
             <div className="import-status">
-              <span className="status-badge success">📁 Fichier importé et sauvegardé</span>
               <button 
                 onClick={handleResetImport}
                 className="btn-reset"
+                style={{padding: 10, cursor: "pointer"}}
               >
                 🗑️ Réinitialiser l'import
               </button>
@@ -581,7 +580,6 @@ export const ImportAgents: React.FC = () => {
                 <div className="card-icon">📁</div>
                 <div className="card-title">
                   <h2>Import du Planning</h2>
-                  <p>Chargez votre fichier Excel pour commencer</p>
                 </div>
               </div>
               
@@ -602,7 +600,7 @@ export const ImportAgents: React.FC = () => {
                       <span>Heure (Départ ou Ramassage)</span>
                     </div>
                     <div className="requirement-item">
-                      <span className="requirement-icon">💡</span>
+                      <span className="requirement-icon">✅</span>
                       <span>Société</span>
                     </div>
                   </div>
@@ -632,8 +630,7 @@ export const ImportAgents: React.FC = () => {
               <div className="card-header">
                 <div className="card-icon">🎯</div>
                 <div className="card-title">
-                  <h2>Filtres de Disponibilité</h2>
-                  <p>Affinez la sélection selon vos besoins</p>
+                  <h2>Filtres des planning salariés</h2>
                 </div>
               </div>
               
@@ -683,11 +680,7 @@ export const ImportAgents: React.FC = () => {
                   <div className="filter-stats modern">
                     <div className="stat-bubble primary">
                       <span className="stat-number">{stats.agentsFiltres}</span>
-                      <span className="stat-label">Disponibles</span>
-                    </div>
-                    <div className="stat-bubble secondary">
-                      <span className="stat-number">{stats.pourcentage}%</span>
-                      <span className="stat-label">Taux</span>
+                      <span className="stat-label">Salariés Disponibles</span>
                     </div>
                   </div>
                 </div>
@@ -698,8 +691,8 @@ export const ImportAgents: React.FC = () => {
                     <p>
                       <strong>Filtrage actif :</strong> 
                       {filtres.typeTransport === 'Ramassage' 
-                        ? ' Agents avec planning débutant à 22H-23H-6H-7H (trié dans cet ordre)' 
-                        : ' Agents avec planning terminant à 22H-23H-0H-1H-2H-3H (trié dans cet ordre)'
+                        ? ' Salariés avec planning débutant à 22H-23H-6H-7H' 
+                        : ' Salariés avec planning terminant à 22H-23H-0H-1H-2H-3H'
                       }
                     </p>
                     <div className="info-stats">
@@ -720,7 +713,6 @@ export const ImportAgents: React.FC = () => {
                 <div className="card-icon">⚡</div>
                 <div className="card-title">
                   <h2>Actions Rapides</h2>
-                  <p>Gérez vos données efficacement</p>
                 </div>
               </div>
               
@@ -734,7 +726,7 @@ export const ImportAgents: React.FC = () => {
                     <span className="btn-icon">💾</span>
                     <span className="btn-content">
                       <span className="btn-title">Sauvegarder</span>
-                      <span className="btn-subtitle">{stats.agentsSansInfos} agents manquants</span>
+                      <span className="btn-subtitle">{stats.agentsSansInfos} salariés info manquants</span>
                     </span>
                   </button>
                   
@@ -756,7 +748,7 @@ export const ImportAgents: React.FC = () => {
                     <span className="btn-icon">🖨️</span>
                     <span className="btn-content">
                       <span className="btn-title">Imprimer</span>
-                      <span className="btn-subtitle">Tableau uniquement</span>
+                      <span className="btn-subtitle">Tableau</span>
                     </span>
                   </button>
                 </div>
@@ -764,7 +756,7 @@ export const ImportAgents: React.FC = () => {
                 {stats.agentsSansInfos === 0 && (
                   <div className="success-message">
                     <span className="success-icon">✅</span>
-                    Tous les agents ont leurs informations complètes dans la base de données
+                    Tous les salariés ont leurs informations complètes dans la base de données
                   </div>
                 )}
               </div>
@@ -781,7 +773,7 @@ export const ImportAgents: React.FC = () => {
                   <h2>Agents Disponibles</h2>
                   <p>
                     {filtres.typeTransport} - {filtres.jour} 
-                    <span className="result-count"> ({agentsFiltres.length} résultats)</span>
+                    <span className="result-count"> ({agentsFiltres.length} Salariés)</span>
                   </p>
                 </div>
               </div>
@@ -840,25 +832,6 @@ export const ImportAgents: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-
-                <div className="stats-grid modern">
-                  <div className="stat-item modern">
-                    <div className="stat-value">{stats.totalAgents}</div>
-                    <div className="stat-label">Total planning</div>
-                  </div>
-                  <div className="stat-item modern">
-                    <div className="stat-value">{stats.agentsAvecInfos}</div>
-                    <div className="stat-label">Complets</div>
-                  </div>
-                  <div className="stat-item modern">
-                    <div className="stat-value">{stats.agentsSansInfos}</div>
-                    <div className="stat-label">À compléter</div>
-                  </div>
-                  <div className="stat-item modern">
-                    <div className="stat-value">{stats.pourcentage}%</div>
-                    <div className="stat-label">Disponibilité</div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -881,26 +854,6 @@ export const ImportAgents: React.FC = () => {
                   <div className="empty-stat">
                     Filtre : <strong>{filtres.typeTransport}</strong>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!imported && !loading && (
-          <div className="empty-state-section">
-            <div className="modern-card">
-              <div className="empty-state modern">
-                <div className="empty-icon">📄</div>
-                <h3>Prêt à commencer</h3>
-                <p>
-                  Importez votre premier fichier Excel de planning 
-                  pour découvrir et filtrer les agents disponibles.
-                </p>
-                <div className="empty-features">
-                  <div className="feature">✅ Filtrage intelligent</div>
-                  <div className="feature">✅ Export multiple formats</div>
-                  <div className="feature">✅ Impression optimisée</div>
                 </div>
               </div>
             </div>

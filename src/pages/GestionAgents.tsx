@@ -47,7 +47,7 @@ export const GestionAgents: React.FC = () => {
       setAgents(agentsData);
     } catch (error) {
       console.error('Erreur chargement agents:', error);
-      alert('Erreur lors du chargement des agents');
+      alert('Erreur lors du chargement des Salarié');
     } finally {
       setLoading(false);
     }
@@ -70,10 +70,10 @@ export const GestionAgents: React.FC = () => {
     try {
       if (editingAgent) {
         await TransportApiService.updateAgent(editingAgent._id!, agentData);
-        alert('✅ Agent mis à jour avec succès !');
+        alert('✅ Salarié mis à jour avec succès !');
       } else {
         await TransportApiService.createAgent(agentData);
-        alert('✅ Agent créé avec succès !');
+        alert('✅ Salarié créé avec succès !');
       }
       await loadAgents();
       setShowForm(false);
@@ -94,7 +94,7 @@ export const GestionAgents: React.FC = () => {
       // Reset form
       e.currentTarget.reset();
     } catch (error) {
-      console.error('Erreur sauvegarde agent:', error);
+      console.error('Erreur sauvegarde Salarié:', error);
       alert('❌ Erreur lors de la sauvegarde');
     }
   };
@@ -107,13 +107,13 @@ export const GestionAgents: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce Salarié ?')) {
       try {
         await TransportApiService.deleteAgent(id);
         await loadAgents();
         alert('✅ Agent supprimé avec succès !');
       } catch (error) {
-        console.error('Erreur suppression agent:', error);
+        console.error('Erreur suppression Salarié:', error);
         alert('❌ Erreur lors de la suppression');
       }
     }
@@ -148,20 +148,20 @@ export const GestionAgents: React.FC = () => {
   );
 
   if (loading) {
-    return <div className="loading">Chargement des agents...</div>;
+    return <div className="loading">Chargement des salariés...</div>;
   }
 
   return (
     <div className="gestion-agents">
       <div className="agents-header">
-        <h1>👤 Gestion des Agents</h1>
+        <h1>👤 Gestion des Salariés</h1>
         <div className="header-actions">
           {location.search.includes('returnTo=import') && (
             <button 
               className="btn-secondary"
               onClick={handleReturnToImport}
             >
-              ↩️ Retour à l'import
+              ↩️ Retour
             </button>
           )}
           <button 
@@ -174,24 +174,24 @@ export const GestionAgents: React.FC = () => {
               }
             }}
           >
-            {showForm ? '❌ Annuler' : '➕ Ajouter un agent'}
+            {showForm ? '❌ Annuler' : '➕ Ajouter un salarié'}
           </button>
         </div>
       </div>
 
       {showForm && (
         <div className="agent-form-container">
-          <h2>{editingAgent ? '✏️ Modifier l\'agent' : '➕ Nouvel agent'}</h2>
+          <h2>{editingAgent ? '✏️ Modifier Salarié' : '➕ Nouveau Salarié'}</h2>
           <form onSubmit={handleSubmit} className="agent-form">
             <div className="form-row">
               <div className="form-group">
-                <label>Nom complet *</label>
+                <label>Nom et psoeudo *</label>
                 <input
                   type="text"
                   name="nom"
                   defaultValue={editingAgent?.nom}
                   required
-                  placeholder="Nom et prénom"
+                  placeholder="Nom et psoeudo"
                 />
               </div>
               <div className="form-group">
@@ -228,20 +228,8 @@ export const GestionAgents: React.FC = () => {
                   placeholder="Nom de la société"
                 />
               </div>
-              <div className="form-group">
-                <label>Chauffeur attitré</label>
-                <input
-                  type="text"
-                  name="chauffeurNom"
-                  defaultValue={editingAgent?.chauffeurNom}
-                  placeholder="Nom du chauffeur"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Véhicule du chauffeur</label>
+             <div className="form-group">
+                <label>Véhicule et matricule</label>
                 <input
                   type="text"
                   name="vehiculeChauffeur"
@@ -249,6 +237,9 @@ export const GestionAgents: React.FC = () => {
                   placeholder="Modèle du véhicule"
                 />
               </div>
+            </div>
+
+            <div className="form-row">
               <div className="form-group checkbox-group">
                 <label className="checkbox-label">
                   <input
@@ -257,7 +248,7 @@ export const GestionAgents: React.FC = () => {
                     defaultChecked={editingAgent?.voiturePersonnelle}
                   />
                   <span className="checkmark"></span>
-                  A une voiture personnelle
+                  🚘 Voiture personnelle
                 </label>
               </div>
             </div>
@@ -282,13 +273,13 @@ export const GestionAgents: React.FC = () => {
         <div className="search-bar">
           <input
             type="text"
-            placeholder="🔍 Rechercher un agent par nom, société ou adresse..."
+            placeholder="🔍 Rechercher un salarié par nom, société ou adresse..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
           <span className="agents-count">
-            {filteredAgents.length} agent(s) trouvé(s)
+            {filteredAgents.length} salarié(s) trouvé(s)
           </span>
         </div>
 
@@ -346,7 +337,7 @@ export const GestionAgents: React.FC = () => {
             ))
           ) : (
             <div className="no-data">
-              {searchTerm ? 'Aucun agent trouvé pour votre recherche' : 'Aucun agent enregistré'}
+              {searchTerm ? 'Aucun salarié trouvé pour votre recherche' : 'Aucun salarié enregistré'}
             </div>
           )}
         </div>
