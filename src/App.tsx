@@ -17,7 +17,7 @@ function App() {
         <Navigation />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<ImportAgents />} />
             <Route path="/import-agents" element={<ImportAgents />} />
             <Route path="/agents" element={<GestionAgents />} />
             <Route path="/chauffeurs" element={<GestionChauffeurs />} />

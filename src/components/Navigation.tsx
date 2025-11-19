@@ -13,12 +13,20 @@ export const Navigation: React.FC = () => {
       <ul className="nav-links">
         <li>
           <Link 
+            to="/import-agents" 
+            className={location.pathname === '/import-agents' ? 'active' : ''}
+          >
+             📊 Dashboard
+          </Link>
+        </li>
+        {/*<li>
+          <Link 
             to="/" 
             className={location.pathname === '/' ? 'active' : ''}
           >
-            📊 Dashboard
+           
           </Link>
-        </li>
+        </li> */}
         <li>
           <Link 
             to="/agents" 
@@ -27,14 +35,7 @@ export const Navigation: React.FC = () => {
             👤 Agents
           </Link>
         </li>
-        <li>
-          <Link 
-            to="/import-agents" 
-            className={location.pathname === '/import-agents' ? 'active' : ''}
-          >
-            📄 Import-Agents
-          </Link>
-        </li>
+        
         <li>
           <Link 
             to="/chauffeurs" 
