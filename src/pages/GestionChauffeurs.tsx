@@ -83,11 +83,18 @@ const CalendarPicker: React.FC<{
         day: i,
         date: dateString,
         hasAffectations,
-        isCurrentMonth: true
+        isCurrentMonth: true,
+        isToday: isToday(date),
+        isSelected: dateString === selectedDate
       });
     }
     
     return daysArray;
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
   };
 
   const calendarDays = generateCalendarDays();
@@ -98,6 +105,10 @@ const CalendarPicker: React.FC<{
 
   const goToNextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentMonth(new Date());
   };
 
   const handleDateSelect = (date: string) => {
@@ -111,7 +122,25 @@ const CalendarPicker: React.FC<{
     return `${day}/${month}/${year}`;
   };
 
-  return (
+  // Fermer le calendrier quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.calendar-picker')) {
+        setShowCalendar(false);
+      }
+    };
+
+    if (showCalendar) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCalendar]);
+
+ return (
     <div className="calendar-picker">
       <div className="calendar-input-container">
         <input
@@ -130,41 +159,46 @@ const CalendarPicker: React.FC<{
       {showCalendar && (
         <div className="calendar-dropdown">
           <div className="calendar-header">
-            <button onClick={goToPreviousMonth} className="calendar-nav-btn">
+            <button onClick={goToPreviousMonth} className="calendar-nav-btn" title="Mois précédent">
               ◀
             </button>
             <span className="calendar-month">
               {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </span>
-            <button onClick={goToNextMonth} className="calendar-nav-btn">
+            <button onClick={goToNextMonth} className="calendar-nav-btn" title="Mois suivant">
               ▶
             </button>
           </div>
 
-          <div className="calendar-grid">
+          <div className="calendar-weekdays">
             {days.map(day => (
-              <div key={day} className="calendar-day-header">
+              <div key={day} className="calendar-weekday">
                 {day}
               </div>
             ))}
-            
+          </div>
+
+          <div className="calendar-grid">
             {calendarDays.map((day, index) => (
               <div
                 key={index}
                 className={`calendar-day ${
                   !day ? 'empty' : ''
                 } ${
-                  day && day.date === selectedDate ? 'selected' : ''
+                  day && day.isToday ? 'today' : ''
+                } ${
+                  day && day.isSelected ? 'selected' : ''
                 } ${
                   day && day.hasAffectations ? 'has-data' : ''
                 }`}
                 onClick={() => day && handleDateSelect(day.date)}
+                title={day ? `${day.day} ${months[currentMonth.getMonth()]} ${currentMonth.getFullYear()}` : ''}
               >
                 {day && (
                   <>
                     <span className="day-number">{day.day}</span>
                     {day.hasAffectations && (
-                      <span className="data-indicator">•</span>
+                      <span className="data-indicator" title="Affectations présentes">•</span>
                     )}
                   </>
                 )}
@@ -172,10 +206,19 @@ const CalendarPicker: React.FC<{
             ))}
           </div>
 
-          <div className="calendar-legend">
-            <div className="legend-item">
-              <span className="legend-dot has-data"></span>
-              <span>Affectations</span>
+          <div className="calendar-footer">
+            <button onClick={goToToday} className="today-btn">
+              Aujourd'hui
+            </button>
+            <div className="calendar-legend">
+              <div className="legend-item">
+                <span className="legend-dot today"></span>
+                <span>Aujourd'hui</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot has-data"></span>
+                <span>Affectations</span>
+              </div>
             </div>
           </div>
         </div>
@@ -299,7 +342,7 @@ const AgentsSelection: React.FC<{
           if (indexA !== -1) return -1;
           if (indexB !== -1) return 1;
         }
-        return a.heure - b.heure;
+        return parseInt(a.heure as unknown as string) - parseInt(b.heure as unknown as string);
       });
 
       console.log(`✅ ${agentsTries.length} salaries disponibles trouvés:`, 
@@ -503,22 +546,43 @@ const AgentsSelection: React.FC<{
   );
 };
 
+interface Chauffeur {
+  _id?: string;
+  nom: string;
+  cin: string;
+  telephone: string;
+  societe: string;
+  voiture: string;
+  createdAt?: string;
+}
+
 // Composant AffectationForm avec design amélioré
 const AffectationForm: React.FC<{ 
   agents: Agent[];
   planningData: PlanningData[];
   onSubmit: (data: Partial<Affectation>) => void;
   affectationExistante?: Affectation;
-}> = ({ agents, planningData, onSubmit, affectationExistante }) => {
+  chauffeurs: Chauffeur[];
+}> = ({ agents, planningData, onSubmit, affectationExistante, chauffeurs }) => {
   const [formData, setFormData] = useState<Partial<Affectation>>({
     chauffeur: affectationExistante?.chauffeur || '',
-    heure: affectationExistante?.heure || 6,
+    heure: affectationExistante?.heure || '6h',
     agents: affectationExistante?.agents || [],
     typeTransport: affectationExistante?.typeTransport || 'Ramassage',
     jour: affectationExistante?.jour || 'Lundi',
     prixCourse: affectationExistante?.prixCourse || 10,
     vehicule: affectationExistante?.vehicule || ''
   });
+
+  const handleChauffeurChange = (chauffeurNom: string) => {
+    const chauffeurSelectionne = chauffeurs.find(ch => ch.nom === chauffeurNom);
+    
+    setFormData(prev => ({
+      ...prev,
+      chauffeur: chauffeurNom,
+      vehicule: chauffeurSelectionne?.voiture || ''
+    }));
+  };
 
   // Fonction pour calculer le prix par société
   const calculerPrixParSociete = (agents: AgentAffectation[], prixTotal: number): string => {
@@ -566,7 +630,7 @@ const AffectationForm: React.FC<{
     if (!affectationExistante) {
       setFormData({
         chauffeur: '',
-        heure: formData.typeTransport === 'Ramassage' ? 6 : 22,
+        heure: formData.typeTransport === 'Ramassage' ? "6" : "22",
         agents: [],
         typeTransport: formData.typeTransport || 'Ramassage',
         jour: formData.jour || 'Lundi',
@@ -582,6 +646,9 @@ const AffectationForm: React.FC<{
 
   const heuresRamassage = [22, 23, 6, 7];
   const heuresDepart = [22, 23, 0, 1, 2, 3];
+   const getHeuresOptions = () => {
+    return formData.typeTransport === 'Ramassage' ? heuresRamassage : heuresDepart;
+  };
 
   const repartitionSocietes = getRepartitionParSociete(formData.agents || [], formData.prixCourse || 0);
 
@@ -592,25 +659,43 @@ const AffectationForm: React.FC<{
         <div className="form-row">
           <div className="form-group modern">
             <label className="form-label">Nom du Chauffeur *</label>
-            <input
-              type="text"
-              value={formData.chauffeur || ''}
-              onChange={(e) => setFormData({ ...formData, chauffeur: e.target.value })}
-              required
-              placeholder="Nom du chauffeur"
-              className="modern-input"
-            />
+            <div className="select-wrapper">
+              <select
+                value={formData.chauffeur || ''}
+                onChange={(e) => handleChauffeurChange(e.target.value)}
+                required
+                className="modern-select"
+              >
+                <option value="">Sélectionner</option>
+                {chauffeurs.map(chauffeur => (
+                  <option key={chauffeur._id} value={chauffeur.nom}>
+                    👨‍✈️ {chauffeur.nom}
+                  </option>
+                ))}
+              </select>
+              <div className="select-arrow">▼</div>
+            </div>
+            {formData.chauffeur && (
+              <small className="field-info">
+                Chauffeur sélectionné: {formData.chauffeur}
+              </small>
+            )}
           </div>
 
-          <div className="form-group modern">
+           <div className="form-group modern">
             <label className="form-label">Véhicule</label>
             <input
               type="text"
               value={formData.vehicule || ''}
               onChange={(e) => setFormData({ ...formData, vehicule: e.target.value })}
-              placeholder="Modèle du véhicule"
+              placeholder="Véhicule"
               className="modern-input"
             />
+            {formData.vehicule && (
+              <small className="field-info">
+                Véhicule: {formData.vehicule}
+              </small>
+            )}
           </div>
         </div>
       </div>
@@ -656,22 +741,16 @@ const AffectationForm: React.FC<{
           <div className="form-group modern">
             <label className="form-label">Heure *</label>
             <div className="select-wrapper">
-              <select
-                value={formData.heure}
-                onChange={(e) => setFormData({ ...formData, heure: parseInt(e.target.value) })}
+               <select
+                value={formData.heure} // ← Maintenant c'est une string
+                onChange={(e) => setFormData({ ...formData, heure: e.target.value })} // ← Pas de parseInt
                 className="modern-select"
               >
-                {formData.typeTransport === 'Ramassage' ? (
-                  heuresRamassage.map(heure => (
-                    <option key={heure} value={heure}>⏰ {heure}h</option>
-                  ))
-                ) : (
-                  heuresDepart.map(heure => (
-                    <option key={heure} value={heure}>
-                      ⏰ {heure === 0 ? '00h' : `${heure}h`}
-                    </option>
-                  ))
-                )}
+                {getHeuresOptions().map(heure => (
+                  <option key={heure} value={heure}>
+                    ⏰ {heure}
+                  </option>
+                ))}
               </select>
               <div className="select-arrow">▼</div>
             </div>
@@ -751,11 +830,11 @@ const AffectationCard: React.FC<{
 }> = ({ affectation, onDelete, onEdit }) => {
   const isTaxi = affectation.chauffeur.toLowerCase().includes('taxi');
   
-  const getHeureAffichage = (heure: number) => {
-    if (heure === 0) return '00h';
-    if (heure === 1) return '01h';
-    if (heure === 2) return '02h';
-    if (heure === 3) return '03h';
+  const getHeureAffichage = (heure: string) => {
+    if (heure === '00') return '00';
+    if (heure === '01') return '01';
+    if (heure === '02') return '02';
+    if (heure === '03') return '03';
     return `${heure}h`;
   };
 
@@ -831,11 +910,11 @@ const AffectationDetaillee: React.FC<{
 }> = ({ affectation, onDelete, onEdit }) => {
   const isTaxi = affectation.vehicule.toLowerCase().includes('taxi');
   
-  const getHeureAffichage = (heure: number) => {
-    if (heure === 0) return '00h';
-    if (heure === 1) return '01h';
-    if (heure === 2) return '02h';
-    if (heure === 3) return '03h';
+  const getHeureAffichage = (heure: string) => {
+    if (heure === '00') return '00';
+    if (heure === '01') return '01';
+    if (heure === '02') return '02';
+    if (heure === '03') return '03';
     return `${heure}h`;
   };
 
@@ -997,7 +1076,10 @@ const SearchBar: React.FC<{
       
       <div className="search-filters-grid">
         <div className="filter-group">
-          <label>📅 Sélectionner une date</label>
+          <label className="filter-label">
+            <span className="label-icon">📅</span>
+            Sélectionner une date
+          </label>
           <CalendarPicker
             selectedDate={searchDate}
             onDateSelect={onDateChange}
@@ -1006,7 +1088,10 @@ const SearchBar: React.FC<{
         </div>
         
         <div className="filter-group">
-          <label>🚗 Type de transport</label>
+          <label className="filter-label">
+            <span className="label-icon">🚗</span>
+            Type de transport
+          </label>
           <select
             value={searchType}
             onChange={(e) => onTypeChange(e.target.value)}
@@ -1019,13 +1104,22 @@ const SearchBar: React.FC<{
         </div>
 
         <div className="filter-group">
-          <label>📊 Actions rapides</label>
+          <label className="filter-label">
+            <span className="label-icon">⚡</span>
+            Actions rapides
+          </label>
           <div className="quick-actions">
             <button 
               onClick={() => onDateChange('')}
               className={`quick-action-btn ${!searchDate ? 'active' : ''}`}
             >
               Toutes les dates
+            </button>
+            <button 
+              onClick={() => onTypeChange('')}
+              className={`quick-action-btn ${!searchType ? 'active' : ''}`}
+            >
+              Tous les types
             </button>
           </div>
         </div>
@@ -1044,6 +1138,7 @@ export const GestionChauffeurs: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [searchDate, setSearchDate] = useState<string>('');
   const [searchType, setSearchType] = useState<string>('');
+  const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
   
   const { planningData } = usePlanning();
 
@@ -1054,12 +1149,14 @@ export const GestionChauffeurs: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [affectationsData, agentsData] = await Promise.all([
+      const [affectationsData, agentsData, chauffeursData] = await Promise.all([
         TransportApiService.getAffectations(),
-        TransportApiService.getAgents()
+        TransportApiService.getAgents(),
+        TransportApiService.getChauffeurs()
       ]);
       setAffectations(affectationsData);
       setAgents(agentsData);
+      setChauffeurs(chauffeursData);
     } catch (error) {
       console.error('Erreur chargement données:', error);
       alert('Erreur lors du chargement des données');
@@ -1121,7 +1218,7 @@ export const GestionChauffeurs: React.FC = () => {
   // Filtrer les affectations en cours (aujourd'hui)
   const affectationsEnCours = affectations.filter(aff => 
     aff.dateReelle === getTodayDate()
-  ).sort((a, b) => a.heure - b.heure);
+  ).sort((a, b) => parseInt(a.heure as string) - parseInt(b.heure as string));
 
   // Grouper toutes les affectations par date
   const affectationsParDate = affectations.reduce((acc, affectation) => {
@@ -1243,6 +1340,7 @@ export const GestionChauffeurs: React.FC = () => {
               <AffectationForm 
                 agents={agents}
                 planningData={planningData}
+                chauffeurs={chauffeurs}
                 onSubmit={handleAddAffectation}
                 affectationExistante={editingAffectation || undefined}
               />
@@ -1466,7 +1564,7 @@ export const GestionChauffeurs: React.FC = () => {
                       <div className="affectations-list-detailed">
                         {affectationsParDate[selectedDate]
                           ?.filter(a => a.typeTransport === 'Ramassage')
-                          .sort((a, b) => a.heure - b.heure)
+                          .sort((a, b) => parseInt(a.heure as string) - parseInt(b.heure as string))
                           .map(affectation => (
                             <AffectationDetaillee
                               key={affectation._id}
@@ -1489,7 +1587,7 @@ export const GestionChauffeurs: React.FC = () => {
                       <div className="affectations-list-detailed">
                         {affectationsParDate[selectedDate]
                           ?.filter(a => a.typeTransport === 'Départ')
-                          .sort((a, b) => a.heure - b.heure)
+                          .sort((a, b) => parseInt(a.heure as string) - parseInt(b.heure as string))
                           .map(affectation => (
                             <AffectationDetaillee
                               key={affectation._id}

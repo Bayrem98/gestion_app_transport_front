@@ -46,8 +46,8 @@ export const Navigation: React.FC = () => {
         
         <li>
           <Link 
-            to="/chauffeurs" 
-            className={location.pathname === '/chauffeurs' ? 'active' : ''}
+            to="/affectations" 
+            className={location.pathname === '/affectations' ? 'active' : ''}
           >
             🎯 Affectation
           </Link>

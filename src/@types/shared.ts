@@ -31,7 +31,7 @@ export interface AgentAffectation {
 export interface Affectation {
   _id?: string;
   chauffeur: string;
-  heure: number;
+  heure: string;
   agents: AgentAffectation[];
   vehicule: string;
   typeTransport: 'Ramassage' | 'Départ';

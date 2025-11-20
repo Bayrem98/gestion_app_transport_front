@@ -21,7 +21,7 @@ function App() {
             <Route path="/" element={<ImportAgents />} />
             <Route path="/import-agents" element={<ImportAgents />} />
             <Route path="/agents" element={<GestionAgents />} />
-            <Route path="/chauffeurs" element={<GestionChauffeurs />} />
+            <Route path="/affectations" element={<GestionChauffeurs />} />
             <Route path="/chauffeurspage" element={<ChauffeurPage />} />
             <Route path="/rapports" element={<Rapports />} />
           </Routes>
