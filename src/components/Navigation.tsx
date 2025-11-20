@@ -32,7 +32,15 @@ export const Navigation: React.FC = () => {
             to="/agents" 
             className={location.pathname === '/agents' ? 'active' : ''}
           >
-            👤 Agents
+            👥 Salariés
+          </Link>
+        </li>
+        <li>
+          <Link 
+            to="/chauffeurspage" 
+            className={location.pathname === '/chauffeurspage' ? 'active' : ''}
+          >
+            🚐 Chauffeurs
           </Link>
         </li>
         
@@ -41,7 +49,7 @@ export const Navigation: React.FC = () => {
             to="/chauffeurs" 
             className={location.pathname === '/chauffeurs' ? 'active' : ''}
           >
-            🚗 Chauffeurs
+            🎯 Affectation
           </Link>
         </li>
         <li>

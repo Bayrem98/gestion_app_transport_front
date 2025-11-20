@@ -8,6 +8,7 @@ import { Rapports } from './pages/Rapports';
 import './App.css';
 import { PlanningProvider } from './pages/PlanningContext';
 import { ImportAgents } from './pages/ImportAgents';
+import { ChauffeurPage } from './pages/ChauffeurPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/import-agents" element={<ImportAgents />} />
             <Route path="/agents" element={<GestionAgents />} />
             <Route path="/chauffeurs" element={<GestionChauffeurs />} />
+            <Route path="/chauffeurspage" element={<ChauffeurPage />} />
             <Route path="/rapports" element={<Rapports />} />
           </Routes>
         </main>

@@ -184,7 +184,7 @@ const CalendarPicker: React.FC<{
   );
 };
 
-// Composant pour sélectionner les agents avec cases à cocher
+// Composant pour sélectionner les salariés avec cases à cocher
 const AgentsSelection: React.FC<{
   agents: Agent[];
   planningData: PlanningData[];
@@ -196,9 +196,9 @@ const AgentsSelection: React.FC<{
   const [agentsDisponibles, setAgentsDisponibles] = useState<(Agent & { heure: number; heureAffichage: string; planning: string })[]>([]);
   const [agentsCoches, setAgentsCoches] = useState<{ [key: string]: boolean }>({});
 
-  // Filtrer les agents disponibles selon le planning
+  // Filtrer les salariés disponibles selon le planning
   useEffect(() => {
-    console.log('🔍 Filtrage des agents:', {
+    console.log('🔍 Filtrage des salariés:', {
       agents: agents.length,
       planningData: planningData.length,
       typeTransport,
@@ -215,14 +215,14 @@ const AgentsSelection: React.FC<{
     const filtrerAgents = () => {
       const agentsAvecHeure = agents
         .filter(agent => {
-          // Vérifier si l'agent n'est pas déjà sélectionné
+          // Vérifier si salarié n'est pas déjà sélectionné
           const estDejaSelectionne = agentsSelectionnes.find(a => a.agentNom === agent.nom);
           if (estDejaSelectionne) {
             console.log(`➡️ ${agent.nom} déjà sélectionné`);
             return false;
           }
 
-          // Trouver le planning de cet agent
+          // Trouver le planning de ce salarié
           const planningAgent = planningData.find(p => p.Salarie === agent.nom);
           if (!planningAgent) {
             console.log(`❌ Aucun planning trouvé pour ${agent.nom}`);
@@ -280,7 +280,7 @@ const AgentsSelection: React.FC<{
           };
         });
 
-      // Trier les agents par heure
+      // Trier les salariés par heure
       const agentsTries = agentsAvecHeure.sort((a, b) => {
         if (typeTransport === 'Ramassage') {
           const ordreRamassage = [22, 23, 6, 7];
@@ -302,7 +302,7 @@ const AgentsSelection: React.FC<{
         return a.heure - b.heure;
       });
 
-      console.log(`✅ ${agentsTries.length} agents disponibles trouvés:`, 
+      console.log(`✅ ${agentsTries.length} salaries disponibles trouvés:`, 
         agentsTries.map(a => `${a.nom} (${a.heureAffichage})`)
       );
 
@@ -330,7 +330,7 @@ const AgentsSelection: React.FC<{
     const agentsAAjouter = agentsDisponibles.filter(agent => agentsCoches[agent.nom]);
     
     if (agentsAAjouter.length === 0) {
-      alert('Veuillez sélectionner au moins un agent');
+      alert('Veuillez sélectionner au moins un salarié');
       return;
     }
 
@@ -341,7 +341,7 @@ const AgentsSelection: React.FC<{
       societe: agent.societe
     }));
 
-    console.log(`➕ Ajout de ${agentsAAjouter.length} agents:`, 
+    console.log(`➕ Ajout de ${agentsAAjouter.length} salariés:`, 
       agentsAAjouter.map(a => a.nom)
     );
 
@@ -357,7 +357,7 @@ const AgentsSelection: React.FC<{
 
   const supprimerAgent = (index: number) => {
     const agentASupprimer = agentsSelectionnes[index];
-    console.log(`➖ Suppression de l'agent:`, agentASupprimer.agentNom);
+    console.log(`➖ Suppression de salarié:`, agentASupprimer.agentNom);
     
     const nouveauxAgents = agentsSelectionnes.filter((_, i) => i !== index);
     onAgentsChange(nouveauxAgents);
@@ -369,7 +369,7 @@ const AgentsSelection: React.FC<{
       tousCoches[agent.nom] = true;
     });
     setAgentsCoches(tousCoches);
-    console.log(`📋 Tous les agents sélectionnés (${agentsDisponibles.length})`);
+    console.log(`📋 Tous les salariés sélectionnés (${agentsDisponibles.length})`);
   };
 
   const deselectionnerTous = () => {
@@ -378,7 +378,7 @@ const AgentsSelection: React.FC<{
       aucunCoche[agent.nom] = false;
     });
     setAgentsCoches(aucunCoche);
-    console.log(`🗑️ Tous les agents désélectionnés`);
+    console.log(`🗑️ Tous les salariés désélectionnés`);
   };
 
   const nombreAgentsCoches = Object.values(agentsCoches).filter(Boolean).length;
@@ -386,14 +386,14 @@ const AgentsSelection: React.FC<{
   return (
     <div className="agents-selection">
       <div className="selection-header">
-        <label>Agents à transporter *</label>
-        <span className="agents-count">{agentsSelectionnes.length} agent(s) sélectionné(s)</span>
+        <label>Salariés à transporter *</label>
+        <span className="agents-count">{agentsSelectionnes.length} salarié(s)</span>
       </div>
 
-      {/* Liste des agents sélectionnés */}
+      {/* Liste des salariés sélectionnés */}
       {agentsSelectionnes.length > 0 && (
         <div className="agents-selectionnes">
-          <h4>Agents sélectionnés :</h4>
+          <h4>Salariés sélectionnés :</h4>
           <div className="agents-list">
             {agentsSelectionnes.map((agent, index) => (
               <div key={index} className="agent-selectionne">
@@ -405,7 +405,7 @@ const AgentsSelection: React.FC<{
                   type="button"
                   className="btn-supprimer-agent"
                   onClick={() => supprimerAgent(index)}
-                  title="Retirer cet agent"
+                  title="Retirer ce salarié"
                 >
                   ✕
                 </button>
@@ -415,20 +415,21 @@ const AgentsSelection: React.FC<{
         </div>
       )}
 
-      {/* Sélection des agents avec cases à cocher */}
+      {/* Sélection des salariés avec cases à cocher */}
       <div className="agents-disponibles">
         <div className="disponibles-header">
           <h4>
-            Agents disponibles 
+            Salariés disponibles 
             {agentsDisponibles.length > 0 && ` (${agentsDisponibles.length})`}
           </h4>
+          <br />
           {agentsDisponibles.length > 0 && (
             <div className="actions-rapides">
               <button 
                 type="button" 
                 className="btn-action-rapide"
                 onClick={selectionnerTous}
-                style={{padding: 10}}
+                style={{padding: 10, cursor: "pointer"}}
               >
                 📋 Tout sélectionner
               </button>
@@ -436,14 +437,14 @@ const AgentsSelection: React.FC<{
                 type="button" 
                 className="btn-action-rapide"
                 onClick={deselectionnerTous}
-                style={{padding: 10}}
+                style={{padding: 10, cursor: "pointer", float: "right"}}
               >
                 🗑️ Tout désélectionner
               </button>
             </div>
           )}
         </div>
-        
+        <br />
         {agentsDisponibles.length > 0 ? (
           <>
             <div className="liste-agents-coches">
@@ -460,7 +461,7 @@ const AgentsSelection: React.FC<{
                     <div className="agent-info-coche">
                       <span className="agent-nom-coche">{agent.nom}</span>
                       <div className="agent-details">
-                        <span className="agent-societe-coche">{agent.societe}</span>
+                        <span className="agent-societe-coche">{agent.societe}-</span>
                         <span className="agent-heure">{agent.heureAffichage}</span>
                         <span className="agent-planning" title={agent.planning}>
                           📅
@@ -471,7 +472,7 @@ const AgentsSelection: React.FC<{
                 </div>
               ))}
             </div>
-
+            <br />
             <div className="actions-ajout">
               <button
                 type="button"
@@ -480,35 +481,22 @@ const AgentsSelection: React.FC<{
                 disabled={nombreAgentsCoches === 0}
               >
                 {nombreAgentsCoches === 0 ? (
-                  "➡️ Sélectionnez des agents à ajouter"
+                  "➡️ Sélectionnez des salariés à ajouter"
                 ) : (
-                  `➕ Ajouter les ${nombreAgentsCoches} agent(s) sélectionné(s)`
+                  `➕ Confirmer les ${nombreAgentsCoches} salarié(s) sélectionné(s)`
                 )}
               </button>
             </div>
           </>
         ) : (
           <div className="aucun-agent-disponible">
-            <div className="aucun-agent-icon">🔍</div>
-            <p className="aucun-agent-message">
-              Aucun agent disponible pour le {typeTransport.toLowerCase()} le {jour}
-            </p>
-            <div className="aucun-agent-details">
-              <p>Vérifiez que :</p>
-              <ul>
-                <li>✅ Le planning est correctement importé</li>
-                <li>✅ Les agents ont un planning pour {jour}</li>
-                <li>✅ Les heures correspondent au {typeTransport.toLowerCase()}</li>
-                <li>✅ Les agents ne sont pas déjà sélectionnés</li>
-              </ul>
-            </div>
           </div>
         )}
       </div>
-
+      <br />
       <div className="filter-info">
         <span>
-          {agentsDisponibles.length} agent(s) disponible(s) pour {typeTransport.toLowerCase()} le {jour}
+          {agentsDisponibles.length} salarié(s) disponible(s) pour {typeTransport.toLowerCase()} le {jour}
         </span>
       </div>
     </div>
@@ -569,7 +557,7 @@ const AffectationForm: React.FC<{
     e.preventDefault();
     
     if (!formData.chauffeur || !formData.agents || formData.agents.length === 0) {
-      alert('Veuillez remplir le chauffeur et sélectionner au moins un agent');
+      alert('Veuillez remplir le chauffeur et sélectionner au moins un salarié');
       return;
     }
 
@@ -592,7 +580,7 @@ const AffectationForm: React.FC<{
     setFormData({ ...formData, agents });
   };
 
-  const heuresRamassage = [6, 7, 8];
+  const heuresRamassage = [22, 23, 6, 7];
   const heuresDepart = [22, 23, 0, 1, 2, 3];
 
   const repartitionSocietes = getRepartitionParSociete(formData.agents || [], formData.prixCourse || 0);
@@ -603,7 +591,7 @@ const AffectationForm: React.FC<{
         <h3 className="section-title">👨‍✈️ Informations du chauffeur</h3>
         <div className="form-row">
           <div className="form-group modern">
-            <label className="form-label">Chauffeur *</label>
+            <label className="form-label">Nom du Chauffeur *</label>
             <input
               type="text"
               value={formData.chauffeur || ''}
@@ -693,7 +681,7 @@ const AffectationForm: React.FC<{
 
       {/* Sélection des agents avec cases à cocher */}
       <div className="form-section">
-        <h3 className="section-title">👥 Sélection des agents</h3>
+        <h3 className="section-title">👥 Sélection des salariés</h3>
         <AgentsSelection
           agents={agents}
           planningData={planningData}
@@ -709,7 +697,6 @@ const AffectationForm: React.FC<{
         <div className="form-group modern prix-group">
           <label className="form-label">Prix total de la course (TND) *</label>
           <div className="prix-input-container">
-            <span className="prix-symbol">💰</span>
             <input
               type="number"
               value={formData.prixCourse}
@@ -721,7 +708,7 @@ const AffectationForm: React.FC<{
             />
           </div>
           <small className="prix-info">
-            Prix total pour {(formData.agents || []).length} agent(s) - 
+            Prix total pour {(formData.agents || []).length} salarié(s) - 
             {(formData.agents || []).length && formData.prixCourse ? 
               ` ${calculerPrixParSociete(formData.agents || [], formData.prixCourse)}` : 
               ' 0 TND par société'
@@ -735,7 +722,7 @@ const AffectationForm: React.FC<{
                 <div key={index} className="repartition-item">
                   <span className="societe-nom">{item.societe}</span>
                   <span className="societe-details">
-                    ({item.nombreAgents} agent(s)) : {item.prix.toFixed(2)} TND
+                    ({item.nombreAgents} salarié(s)) : {item.prix.toFixed(2)} TND
                   </span>
                 </div>
               ))}
@@ -778,11 +765,11 @@ const AffectationCard: React.FC<{
     <div className="affectation-card current">
       <div className="affectation-header">
         <div className="affectation-title">
-          <span className={`chauffeur-badge ${isTaxi ? 'taxi' : 'normal'}`}>
-            {isTaxi ? '🚕' : '🚗'} {affectation.chauffeur}
+          <span className={`chauffeur-badge `}>
+             {affectation.chauffeur}
           </span>
           {affectation.vehicule && (
-            <span className="vehicule-info">({affectation.vehicule})</span>
+            <span className={`vehicule-info ${isTaxi ? 'taxi' : 'normal'}`}>({isTaxi ? '🚕' : '🚗'} {affectation.vehicule})</span>
           )}
         </div>
         <div className="affectation-meta">
@@ -795,7 +782,7 @@ const AffectationCard: React.FC<{
       
       <div className="affectation-details">
         <div className="agents-count">
-          👥 {agents.length} agent(s) transporté(s)
+          👥 {agents.length} salarié(s) transporté(s)
         </div>
         
         <div className="detail-row">
@@ -842,7 +829,7 @@ const AffectationDetaillee: React.FC<{
   onDelete: (id: string) => void;
   onEdit: (affectation: Affectation) => void;
 }> = ({ affectation, onDelete, onEdit }) => {
-  const isTaxi = affectation.chauffeur.toLowerCase().includes('taxi');
+  const isTaxi = affectation.vehicule.toLowerCase().includes('taxi');
   
   const getHeureAffichage = (heure: number) => {
     if (heure === 0) return '00h';
@@ -877,11 +864,11 @@ const AffectationDetaillee: React.FC<{
     <div className="affectation-card detailed">
       <div className="affectation-header">
         <div className="affectation-title">
-          <span className={`chauffeur-badge ${isTaxi ? 'taxi' : 'normal'}`}>
-            {isTaxi ? '🚕' : '🚗'} {affectation.chauffeur}
+          <span className="chauffeur-badge">
+             {affectation.chauffeur}
           </span>
           {affectation.vehicule && (
-            <span className="vehicule-info">({affectation.vehicule})</span>
+            <span className={`vehicule-info ${isTaxi ? 'taxi' : 'normal'}`}>({isTaxi ? '🚕' : '🚗'} {affectation.vehicule})</span>
           )}
           <span className="heure-detaillee">{getHeureAffichage(affectation.heure)}</span>
         </div>
@@ -895,18 +882,20 @@ const AffectationDetaillee: React.FC<{
       
       <div className="affectation-details">
         <div className="agents-transportes">
-          <strong>👥 Agents transportés ({agents.length}) :</strong>
+          <strong>👥 Salariés transportés ({agents.length}) :</strong>
+          <br />
+          <br />
           <div className="agents-list">
             {repartitionSocietes.map((item, index) => (
               <div key={index} className="societe-groupe">
                 <div className="societe-header">
-                  <span className="societe-nom">{item.societe}</span>
-                  <span className="societe-count">({item.nombreAgents} agent(s))</span>
+                  <span className="societe-nom" style={{fontWeight: "bold"}}>{item.societe}-</span>
+                  <span className="societe-count" style={{fontWeight: "bold"}}>({item.nombreAgents} salarié)</span>
                 </div>
                 <div className="agents-societe">
                   {item.agents.map((agent, agentIndex) => (
                     <div key={agentIndex} className="agent-item">
-                      <span className="agent-nom">{agent.agentNom}</span>
+                      <span className="agent-nom">{agent.agentNom}-/</span>
                       <span className="agent-adresse">{agent.adresse}</span>
                     </div>
                   ))}
@@ -922,7 +911,7 @@ const AffectationDetaillee: React.FC<{
         </div>
 
         <div className="detail-row">
-          <span className="detail-label">📊 Répartition:</span>
+          <span className="detail-label">📊 Répartition du prix:</span>
           <div className="repartition-details">
             {repartitionSocietes.map((item, index) => {
               const prixParSociete = affectation.prixCourse / repartitionSocietes.length;
@@ -1037,12 +1026,6 @@ const SearchBar: React.FC<{
               className={`quick-action-btn ${!searchDate ? 'active' : ''}`}
             >
               Toutes les dates
-            </button>
-            <button 
-              onClick={() => onTypeChange('')}
-              className={`quick-action-btn ${!searchType ? 'active' : ''}`}
-            >
-              Tous les types
             </button>
           </div>
         </div>
@@ -1221,8 +1204,8 @@ export const GestionChauffeurs: React.FC = () => {
             <span className="planning-missing">⚠️ Aucun planning chargé - Importez d'abord un planning</span>
           )}
           <div className="header-stats">
-            <span className="stat-total">{totalAffectations} affectations</span>
-            <span className="stat-agents">{totalAgents} agents</span>
+            <span className="stat-total">{totalAffectations} Affectations</span>
+            <span className="stat-agents">{totalAgents} Salariés</span>
           </div>
         </div>
       </div>
@@ -1246,7 +1229,7 @@ export const GestionChauffeurs: React.FC = () => {
             handleClearSearch();
           }}
         >
-          📊 Récapitulatif complet
+          📊 Récapitulatif des courses
           <span className="tab-badge">{totalAffectations}</span>
         </button>
       </div>
@@ -1282,13 +1265,13 @@ export const GestionChauffeurs: React.FC = () => {
                   <h2>📋 Affectations du jour ({getTodayDate()})</h2>
                   <div className="stats-courantes">
                     <span className="stat">
-                      🚗 Ramassage: {affectationsEnCours.filter(a => a.typeTransport === 'Ramassage').length}
+                     Ramassage: {affectationsEnCours.filter(a => a.typeTransport === 'Ramassage').length}
                     </span>
                     <span className="stat">
-                      ✈️ Départ: {affectationsEnCours.filter(a => a.typeTransport === 'Départ').length}
+                     Départ: {affectationsEnCours.filter(a => a.typeTransport === 'Départ').length}
                     </span>
                     <span className="stat">
-                      👥 Agents: {affectationsEnCours.reduce((total, aff) => total + (aff.agents?.length || 0), 0)}
+                     Salariés: {affectationsEnCours.reduce((total, aff) => total + (aff.agents?.length || 0), 0)}
                     </span>
                   </div>
                 </div>
@@ -1308,9 +1291,6 @@ export const GestionChauffeurs: React.FC = () => {
                   <div className="no-data">
                     <div className="no-data-icon">📭</div>
                     <p>Aucune affectation pour aujourd'hui</p>
-                    <p className="no-data-subtitle">
-                      Utilisez le formulaire pour ajouter une affectation
-                    </p>
                   </div>
                 )}
               </div>
@@ -1342,7 +1322,7 @@ export const GestionChauffeurs: React.FC = () => {
                     subtitle={searchDate || searchType ? "Filtrées" : "Global"}
                   />
                   <StatsCard
-                    title="Agents Transportés"
+                    title="Salariés Transportés"
                     value={searchDate || searchType ? agentsFiltres : totalAgents}
                     icon="👥"
                     color="green"
@@ -1369,18 +1349,11 @@ export const GestionChauffeurs: React.FC = () => {
                     subtitle={searchDate || searchType ? "Filtrées" : "Total"}
                   />
                   <StatsCard
-                    title="Chiffre d'Affaires"
+                    title="Prix"
                     value={`${(searchDate || searchType ? prixFiltre : totalPrix).toFixed(2)} TND`}
                     icon="💰"
                     color="red"
                     subtitle={`Moyenne: ${prixMoyen.toFixed(2)} TND/course`}
-                  />
-                  <StatsCard
-                    title="Période Couverte"
-                    value={availableDates.length}
-                    icon="📅"
-                    color="teal"
-                    subtitle="Jours avec affectations"
                   />
                 </div>
 
@@ -1459,26 +1432,30 @@ export const GestionChauffeurs: React.FC = () => {
                   <button 
                     onClick={() => setSelectedDate(null)}
                     className="back-button"
+                    style={{padding: 8, cursor: "pointer"}}
                   >
                     ← Retour à la liste
                   </button>
+                  <br />
+                  <br />
                   <h2>📅 Détail des affectations du {selectedDate}</h2>
+                  <br />
                   <div className="date-detail-stats">
-                    <span className="stat">
+                    <span className="stat" style={{padding: 10}}>
                       🚗 {affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Ramassage').length || 0} Ramassages
                     </span>
-                    <span className="stat">
+                    <span className="stat" style={{padding: 10}}>
                       ✈️ {affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Départ').length || 0} Départs
                     </span>
-                    <span className="stat">
-                      👥 {affectationsParDate[selectedDate]?.reduce((sum, a) => sum + (a.agents?.length || 0), 0) || 0} Agents
+                    <span className="stat" style={{padding: 10}}>
+                      👥 {affectationsParDate[selectedDate]?.reduce((sum, a) => sum + (a.agents?.length || 0), 0) || 0} Salariés
                     </span>
-                    <span className="stat">
+                    <span className="stat" style={{padding: 10}}>
                       💰 {affectationsParDate[selectedDate]?.reduce((sum, a) => sum + a.prixCourse, 0) || 0} TND
                     </span>
                   </div>
                 </div>
-
+                <br />
                 <div className="date-detail-content">
                   {/* Ramassages */}
                   {affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Ramassage').length > 0 && (
