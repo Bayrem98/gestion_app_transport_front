@@ -19,14 +19,6 @@ export const Navigation: React.FC = () => {
              📊 Dashboard
           </Link>
         </li>
-        {/*<li>
-          <Link 
-            to="/" 
-            className={location.pathname === '/' ? 'active' : ''}
-          >
-           
-          </Link>
-        </li> */}
         <li>
           <Link 
             to="/agents" 
@@ -58,10 +50,10 @@ export const Navigation: React.FC = () => {
             to="/recap" 
             className={location.pathname === '/recap' ? 'active' : ''}
           >
-            📈 Recapitulatif
+            🗓️ Recapitulatif
           </Link>
         </li>
-     {/*  <li>
+      <li>
           <Link 
             to="/rapports" 
             className={location.pathname === '/rapports' ? 'active' : ''}
@@ -69,7 +61,7 @@ export const Navigation: React.FC = () => {
             📈 Rapports
           </Link>
         </li>
-        */} 
+        
       </ul>
     </nav>
   );
