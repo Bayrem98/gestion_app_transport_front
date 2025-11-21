@@ -307,7 +307,7 @@ export const GestionAgents: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="agent-details">
+                <div className="agentss-details">
                   <p><strong>📞 Téléphone:</strong> {agent.telephone}</p>
                   <p><strong>📍 Adresse:</strong> {agent.adresse}</p>
                   <p><strong>🏢 Société:</strong> {agent.societe}</p>

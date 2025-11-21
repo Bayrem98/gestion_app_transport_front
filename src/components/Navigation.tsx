@@ -52,6 +52,15 @@ export const Navigation: React.FC = () => {
             🎯 Affectation
           </Link>
         </li>
+
+        <li>
+          <Link 
+            to="/recap" 
+            className={location.pathname === '/recap' ? 'active' : ''}
+          >
+            📈 Recapitulatif
+          </Link>
+        </li>
      {/*  <li>
           <Link 
             to="/rapports" 

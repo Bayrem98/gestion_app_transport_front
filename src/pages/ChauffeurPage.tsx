@@ -152,7 +152,7 @@ export const ChauffeurPage: React.FC = () => {
   return (
     <div className="gestion-chauffeurs">
       <div className="chauffeurs-header">
-        <h1 style={{color: "black"}}>🚐 Gestion des Chauffeurs</h1>
+        <h1>🚐 Gestion des Chauffeurs</h1>
         <div className="header-actions">
           {location.search.includes('returnTo=import') && (
             <button 
