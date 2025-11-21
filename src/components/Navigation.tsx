@@ -8,7 +8,7 @@ export const Navigation: React.FC = () => {
   return (
     <nav className="navigation">
       <div className="nav-brand">
-        <h2>🚗 Gestion Transport</h2>
+        <h2>Gestion Transport</h2>
       </div>
       <ul className="nav-links">
         <li>
@@ -52,7 +52,7 @@ export const Navigation: React.FC = () => {
             🎯 Affectation
           </Link>
         </li>
-        <li>
+     {/*  <li>
           <Link 
             to="/rapports" 
             className={location.pathname === '/rapports' ? 'active' : ''}
@@ -60,6 +60,7 @@ export const Navigation: React.FC = () => {
             📈 Rapports
           </Link>
         </li>
+        */} 
       </ul>
     </nav>
   );

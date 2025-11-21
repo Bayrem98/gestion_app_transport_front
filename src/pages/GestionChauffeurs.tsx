@@ -295,7 +295,7 @@ const AgentsSelection: React.FC<{
           } else {
             heureCalcul = normaliserHeureAffichage(heures.heureFin);
             estDisponible = [22, 23, 0, 1, 2, 3].includes(heureCalcul);
-            console.log(`✈️ ${agent.nom} - Départ à ${heureCalcul}h -> ${estDisponible ? 'DISPONIBLE' : 'NON DISPONIBLE'}`);
+            console.log(`🏠 ${agent.nom} - Départ à ${heureCalcul}h -> ${estDisponible ? 'DISPONIBLE' : 'NON DISPONIBLE'}`);
           }
 
           return estDisponible;
@@ -712,7 +712,7 @@ const AffectationForm: React.FC<{
                 className="modern-select"
               >
                 <option value="Ramassage">🚗 Ramassage</option>
-                <option value="Départ">✈️ Départ</option>
+                <option value="Départ">🏠 Départ</option>
               </select>
               <div className="select-arrow">▼</div>
             </div>
@@ -1099,7 +1099,7 @@ const SearchBar: React.FC<{
           >
             <option value="">Tous les types</option>
             <option value="Ramassage">🚗 Ramassage</option>
-            <option value="Départ">✈️ Départ</option>
+            <option value="Départ">🏠 Départ</option>
           </select>
         </div>
 
@@ -1293,7 +1293,7 @@ export const GestionChauffeurs: React.FC = () => {
   return (
     <div className="gestion-chauffeurs">
       <div className="chauffeurs-header">
-        <h1>👨‍✈️ Gestion des Chauffeurs</h1>
+        <h1 style={{color: "black"}}>🎯 Gestion des Affectations</h1>
         <div className="header-info">
           {planningData.length > 0 ? (
             <span className="planning-loaded">📅 Planning chargé ({planningData.length} agents)</span>
@@ -1442,7 +1442,7 @@ export const GestionChauffeurs: React.FC = () => {
                       affectationsFiltrees.filter(a => a.typeTransport === 'Départ').length : 
                       totalDepart
                     }
-                    icon="✈️"
+                    icon="🏠"
                     color="purple"
                     subtitle={searchDate || searchType ? "Filtrées" : "Total"}
                   />
@@ -1490,7 +1490,7 @@ export const GestionChauffeurs: React.FC = () => {
                                 🚗 {affectationsParDate[date].filter(a => a.typeTransport === 'Ramassage').length}
                               </span>
                               <span className="date-stat">
-                                ✈️ {affectationsParDate[date].filter(a => a.typeTransport === 'Départ').length}
+                                🏠 {affectationsParDate[date].filter(a => a.typeTransport === 'Départ').length}
                               </span>
                               <span className="date-stat">
                                 👥 {affectationsParDate[date].reduce((sum, a) => sum + (a.agents?.length || 0), 0)}
@@ -1543,7 +1543,7 @@ export const GestionChauffeurs: React.FC = () => {
                       🚗 {affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Ramassage').length || 0} Ramassages
                     </span>
                     <span className="stat" style={{padding: 10}}>
-                      ✈️ {affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Départ').length || 0} Départs
+                      🏠 {affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Départ').length || 0} Départs
                     </span>
                     <span className="stat" style={{padding: 10}}>
                       👥 {affectationsParDate[selectedDate]?.reduce((sum, a) => sum + (a.agents?.length || 0), 0) || 0} Salariés
@@ -1582,7 +1582,7 @@ export const GestionChauffeurs: React.FC = () => {
                   {affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Départ').length > 0 && (
                     <div className="transport-section">
                       <h3 className="section-title depart">
-                        ✈️ Courses de Départ ({affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Départ').length})
+                        🏠 Courses de Départ ({affectationsParDate[selectedDate]?.filter(a => a.typeTransport === 'Départ').length})
                       </h3>
                       <div className="affectations-list-detailed">
                         {affectationsParDate[selectedDate]

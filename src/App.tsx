@@ -23,7 +23,7 @@ function App() {
             <Route path="/agents" element={<GestionAgents />} />
             <Route path="/affectations" element={<GestionChauffeurs />} />
             <Route path="/chauffeurspage" element={<ChauffeurPage />} />
-            <Route path="/rapports" element={<Rapports />} />
+           {/* <Route path="/rapports" element={<Rapports />} /> */}
           </Routes>
         </main>
       </div>
