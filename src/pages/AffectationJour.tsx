@@ -286,7 +286,6 @@ const AgentsSelection: React.FC<{
                 type="button" 
                 className="btn-action-rapide"
                 onClick={selectionnerTous}
-                style={{padding: 10, cursor: "pointer"}}
               >
                 📋 Tout sélectionner
               </button>
@@ -294,7 +293,6 @@ const AgentsSelection: React.FC<{
                 type="button" 
                 className="btn-action-rapide"
                 onClick={deselectionnerTous}
-                style={{padding: 10, cursor: "pointer", float: "right"}}
               >
                 🗑️ Tout désélectionner
               </button>
@@ -556,13 +554,13 @@ const AffectationForm: React.FC<{
             <label className="form-label">Heure *</label>
             <div className="select-wrapper">
                <select
-                value={formData.heure} // ← Maintenant c'est une string
-                onChange={(e) => setFormData({ ...formData, heure: e.target.value })} // ← Pas de parseInt
+                value={formData.heure}
+                onChange={(e) => setFormData({ ...formData, heure: e.target.value })}
                 className="modern-select"
               >
                 {getHeuresOptions().map(heure => (
                   <option key={heure} value={heure}>
-                    ⏰ {heure}
+                    ⏰ {heure}H
                   </option>
                 ))}
               </select>

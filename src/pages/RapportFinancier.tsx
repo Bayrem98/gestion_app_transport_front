@@ -9,10 +9,14 @@ interface RapportJournalier {
   ramassages: number;
   departs: number;
   prixTotal: number;
+  prixTaxi: number;
+  prixAutres: number;
   societes: {
     [societe: string]: {
       nombreAgents: number;
       prixTotal: number;
+      prixTaxi: number;
+      prixAutres: number;
       affectations: number;
     }
   };
@@ -23,11 +27,15 @@ interface StatistiquesGenerales {
   totalRamassages: number;
   totalDeparts: number;
   prixTotalGeneral: number;
+  prixTaxiTotal: number;
+  prixAutresTotal: number;
   prixMoyenParCourse: number;
   societes: {
     societe: string;
     totalAgents: number;
     totalPrix: number;
+    prixTaxi: number;
+    prixAutres: number;
     nombreAffectations: number;
     prixMoyenParAgent: number;
   }[];
@@ -41,6 +49,7 @@ export const RapportFinancier: React.FC = () => {
   const [dateFin, setDateFin] = useState<string>('');
   const [societeFiltre, setSocieteFiltre] = useState<string>('');
   const [typeTransportFiltre, setTypeTransportFiltre] = useState<string>('');
+  const [typeChauffeurFiltre, setTypeChauffeurFiltre] = useState<string>('');
 
   useEffect(() => {
     loadAffectations();
@@ -58,6 +67,12 @@ export const RapportFinancier: React.FC = () => {
     }
   };
 
+  // Fonction pour déterminer si c'est un taxi
+  const estTaxi = (affectation: Affectation): boolean => {
+    return affectation.chauffeur.toLowerCase().includes('taxi') || 
+           affectation.vehicule.toLowerCase().includes('taxi');
+  };
+
   // Calcul des rapports journaliers
   const rapportsJournaliers = useMemo((): RapportJournalier[] => {
     const affectationsFiltrees = affectations.filter(aff => {
@@ -68,8 +83,10 @@ export const RapportFinancier: React.FC = () => {
         aff.agents?.some(agent => agent.societe === societeFiltre) : true;
       const filtreTypeTransport = typeTransportFiltre ? 
         aff.typeTransport === typeTransportFiltre : true;
+      const filtreTypeChauffeur = typeChauffeurFiltre ? 
+        (typeChauffeurFiltre === 'taxi' ? estTaxi(aff) : !estTaxi(aff)) : true;
 
-      return filtreDateDebut && filtreDateFin && filtreSociete && filtreTypeTransport;
+      return filtreDateDebut && filtreDateFin && filtreSociete && filtreTypeTransport && filtreTypeChauffeur;
     });
 
     const parDate = affectationsFiltrees.reduce((acc, aff) => {
@@ -81,12 +98,22 @@ export const RapportFinancier: React.FC = () => {
           ramassages: 0,
           departs: 0,
           prixTotal: 0,
+          prixTaxi: 0,
+          prixAutres: 0,
           societes: {}
         };
       }
 
+      const estUneCourseTaxi = estTaxi(aff);
+      
       acc[date].totalAffectations++;
       acc[date].prixTotal += aff.prixCourse;
+
+      if (estUneCourseTaxi) {
+        acc[date].prixTaxi += aff.prixCourse;
+      } else {
+        acc[date].prixAutres += aff.prixCourse;
+      }
 
       if (aff.typeTransport === 'Ramassage') {
         acc[date].ramassages++;
@@ -104,6 +131,8 @@ export const RapportFinancier: React.FC = () => {
           acc[date].societes[societe] = {
             nombreAgents: 0,
             prixTotal: 0,
+            prixTaxi: 0,
+            prixAutres: 0,
             affectations: 0
           };
         }
@@ -116,6 +145,12 @@ export const RapportFinancier: React.FC = () => {
       societesDansAffectation.forEach(societe => {
         acc[date].societes[societe].prixTotal += prixParSociete;
         acc[date].societes[societe].affectations++;
+        
+        if (estUneCourseTaxi) {
+          acc[date].societes[societe].prixTaxi += prixParSociete;
+        } else {
+          acc[date].societes[societe].prixAutres += prixParSociete;
+        }
       });
 
       return acc;
@@ -125,7 +160,7 @@ export const RapportFinancier: React.FC = () => {
       new Date(b.date.split('/').reverse().join('-')).getTime() - 
       new Date(a.date.split('/').reverse().join('-')).getTime()
     );
-  }, [affectations, dateDebut, dateFin, societeFiltre, typeTransportFiltre]);
+  }, [affectations, dateDebut, dateFin, societeFiltre, typeTransportFiltre, typeChauffeurFiltre]);
 
   // Calcul des statistiques générales
   const statistiquesGenerales = useMemo((): StatistiquesGenerales => {
@@ -133,10 +168,20 @@ export const RapportFinancier: React.FC = () => {
     const totalRamassages = rapportsJournaliers.reduce((sum, jour) => sum + jour.ramassages, 0);
     const totalDeparts = rapportsJournaliers.reduce((sum, jour) => sum + jour.departs, 0);
     const prixTotalGeneral = rapportsJournaliers.reduce((sum, jour) => sum + jour.prixTotal, 0);
+    const prixTaxiTotal = rapportsJournaliers.reduce((sum, jour) => sum + jour.prixTaxi, 0);
+    const prixAutresTotal = rapportsJournaliers.reduce((sum, jour) => sum + jour.prixAutres, 0);
     const prixMoyenParCourse = totalAffectations > 0 ? prixTotalGeneral / totalAffectations : 0;
 
     // Calcul par société (agrégation sur toutes les dates)
-    const societesAggregees: { [societe: string]: { totalAgents: number; totalPrix: number; nombreAffectations: number } } = {};
+    const societesAggregees: { 
+      [societe: string]: { 
+        totalAgents: number; 
+        totalPrix: number; 
+        prixTaxi: number;
+        prixAutres: number;
+        nombreAffectations: number; 
+      } 
+    } = {};
 
     rapportsJournaliers.forEach(jour => {
       Object.entries(jour.societes).forEach(([societe, data]) => {
@@ -144,11 +189,15 @@ export const RapportFinancier: React.FC = () => {
           societesAggregees[societe] = {
             totalAgents: 0,
             totalPrix: 0,
+            prixTaxi: 0,
+            prixAutres: 0,
             nombreAffectations: 0
           };
         }
         societesAggregees[societe].totalAgents += data.nombreAgents;
         societesAggregees[societe].totalPrix += data.prixTotal;
+        societesAggregees[societe].prixTaxi += data.prixTaxi;
+        societesAggregees[societe].prixAutres += data.prixAutres;
         societesAggregees[societe].nombreAffectations += data.affectations;
       });
     });
@@ -157,6 +206,8 @@ export const RapportFinancier: React.FC = () => {
       societe,
       totalAgents: data.totalAgents,
       totalPrix: data.totalPrix,
+      prixTaxi: data.prixTaxi,
+      prixAutres: data.prixAutres,
       nombreAffectations: data.nombreAffectations,
       prixMoyenParAgent: data.totalAgents > 0 ? data.totalPrix / data.totalAgents : 0
     })).sort((a, b) => b.totalPrix - a.totalPrix);
@@ -171,6 +222,8 @@ export const RapportFinancier: React.FC = () => {
       totalRamassages,
       totalDeparts,
       prixTotalGeneral,
+      prixTaxiTotal,
+      prixAutresTotal,
       prixMoyenParCourse,
       societes,
       meilleursDates
@@ -193,18 +246,21 @@ export const RapportFinancier: React.FC = () => {
     setDateFin('');
     setSocieteFiltre('');
     setTypeTransportFiltre('');
+    setTypeChauffeurFiltre('');
   };
 
   const exporterCSV = () => {
-    const headers = ['Date', 'Total Affectations', 'Ramassages', 'Départs', 'Prix Total', 'Sociétés'];
+    const headers = ['Date', 'Total Courses', 'Ramassages', 'Départs', 'Prix Total', 'Prix Taxi', 'Prix Autres', 'Sociétés'];
     const csvData = rapportsJournaliers.map(jour => [
       jour.date,
       jour.totalAffectations.toString(),
       jour.ramassages.toString(),
       jour.departs.toString(),
       jour.prixTotal.toFixed(2),
+      jour.prixTaxi.toFixed(2),
+      jour.prixAutres.toFixed(2),
       Object.entries(jour.societes).map(([societe, data]) => 
-        `${societe}: ${data.nombreAgents} agents, ${data.prixTotal.toFixed(2)} TND`
+        `${societe}: ${data.nombreAgents} agents, Total: ${data.prixTotal.toFixed(2)} TND (Taxi: ${data.prixTaxi.toFixed(2)} TND, Autres: ${data.prixAutres.toFixed(2)} TND)`
       ).join('; ')
     ]);
 
@@ -293,6 +349,18 @@ export const RapportFinancier: React.FC = () => {
               <option value="Départ">Départ</option>
             </select>
           </div>
+          <div className="filtre-group">
+            <label>Type de chauffeur</label>
+            <select
+              value={typeChauffeurFiltre}
+              onChange={(e) => setTypeChauffeurFiltre(e.target.value)}
+              className="filtre-select"
+            >
+              <option value="">Tous les types</option>
+              <option value="taxi">Taxi uniquement</option>
+              <option value="autres">Autres chauffeurs</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -321,13 +389,39 @@ export const RapportFinancier: React.FC = () => {
               <div className="stat-labels">Courses Départ</div>
             </div>
           </div>
-          <div className="stat-cards prix">
+          <div className="stat-cards prix-total">
             <div className="stat-icons">💰</div>
             <div className="stat-contents">
               <div className="stat-values">{statistiquesGenerales.prixTotalGeneral.toFixed(2)} TND</div>
               <div className="stat-labels">Chiffre d'Affaires Total</div>
               <div className="stat-subtitles">
                 Moyenne: {statistiquesGenerales.prixMoyenParCourse.toFixed(2)} TND/course
+              </div>
+            </div>
+          </div>
+          <div className="stat-cards taxi">
+            <div className="stat-icons">🚕</div>
+            <div className="stat-contents">
+              <div className="stat-values">{statistiquesGenerales.prixTaxiTotal.toFixed(2)} TND</div>
+              <div className="stat-labels">Revenus Taxis</div>
+              <div className="stat-subtitles">
+                {statistiquesGenerales.prixTotalGeneral > 0 ? 
+                  `${((statistiquesGenerales.prixTaxiTotal / statistiquesGenerales.prixTotalGeneral) * 100).toFixed(1)}% du total` 
+                  : '0%'
+                }
+              </div>
+            </div>
+          </div>
+          <div className="stat-cards autres">
+            <div className="stat-icons">👨‍✈️</div>
+            <div className="stat-contents">
+              <div className="stat-values">{statistiquesGenerales.prixAutresTotal.toFixed(2)} TND</div>
+              <div className="stat-labels">Revenus Autres Chauffeurs</div>
+              <div className="stat-subtitles">
+                {statistiquesGenerales.prixTotalGeneral > 0 ? 
+                  `${((statistiquesGenerales.prixAutresTotal / statistiquesGenerales.prixTotalGeneral) * 100).toFixed(1)}% du total` 
+                  : '0%'
+                }
               </div>
             </div>
           </div>
@@ -355,17 +449,41 @@ export const RapportFinancier: React.FC = () => {
                     <span className="value">{societe.nombreAffectations}</span>
                   </div>
                   <div className="societe-stat">
+                    <span className="label">Prix Taxi:</span>
+                    <span className="value taxi">{societe.prixTaxi.toFixed(2)} TND</span>
+                  </div>
+                  <div className="societe-stat">
+                    <span className="label">Prix Autres:</span>
+                    <span className="value autres">{societe.prixAutres.toFixed(2)} TND</span>
+                  </div>
+                  <div className="societe-stat">
                     <span className="label">Prix moyen par agent:</span>
                     <span className="value">{societe.prixMoyenParAgent.toFixed(2)} TND</span>
                   </div>
                 </div>
                 <div className="societe-progress">
                   <div 
-                    className="progress-bar"
+                    className="progress-bar taxi"
                     style={{
-                      width: `${(societe.totalPrix / statistiquesGenerales.prixTotalGeneral) * 100}%`
+                      width: `${societe.totalPrix > 0 ? (societe.prixTaxi / societe.totalPrix) * 100 : 0}%`
                     }}
                   ></div>
+                  <div 
+                    className="progress-bar autres"
+                    style={{
+                      width: `${societe.totalPrix > 0 ? (societe.prixAutres / societe.totalPrix) * 100 : 0}%`
+                    }}
+                  ></div>
+                </div>
+                <div className="societe-legend">
+                  <div className="legend-item">
+                    <span className="legend-color taxi"></span>
+                    <span>Taxi ({(societe.totalPrix > 0 ? (societe.prixTaxi / societe.totalPrix) * 100 : 0).toFixed(1)}%)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-color autres"></span>
+                    <span>Autres ({(societe.totalPrix > 0 ? (societe.prixAutres / societe.totalPrix) * 100 : 0).toFixed(1)}%)</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -383,12 +501,12 @@ export const RapportFinancier: React.FC = () => {
                 <div className="rank">#{index + 1}</div>
                 <div className="date-info">
                   <div className="date">{date.date}</div>
-                  <div className="date-prix-rapports">{date.prixTotal.toFixed(2)} TND</div>
+                  <div className="date-prix">{date.prixTotal.toFixed(2)} TND</div>
                 </div>
-                <div className="date-stats-rapports">
-                  <span className="date-stat-rapports">📊 {date.totalAffectations} courses</span>
-                  <span className="date-stat-rapports">🚗 {date.ramassages} ramass.</span>
-                  <span className="date-stat-rapports">🏠 {date.departs} dép.</span>
+                <div className="date-stats">
+                  <span className="date-stat">📊 {date.totalAffectations} courses</span>
+                  <span className="date-stat">🚕 {date.prixTaxi.toFixed(2)} TND taxi</span>
+                  <span className="date-stat">👨‍✈️ {date.prixAutres.toFixed(2)} TND autres</span>
                 </div>
               </div>
             ))}
@@ -409,6 +527,8 @@ export const RapportFinancier: React.FC = () => {
                   <th>Ramassages</th>
                   <th>Départs</th>
                   <th>Prix Total</th>
+                  <th>Prix Taxi</th>
+                  <th>Prix Autres</th>
                   <th>Sociétés</th>
                 </tr>
               </thead>
@@ -428,13 +548,23 @@ export const RapportFinancier: React.FC = () => {
                     <td className="prix-cell">
                       <strong>{jour.prixTotal.toFixed(2)} TND</strong>
                     </td>
+                    <td className="prix-taxi">
+                      {jour.prixTaxi.toFixed(2)} TND
+                    </td>
+                    <td className="prix-autres">
+                      {jour.prixAutres.toFixed(2)} TND
+                    </td>
                     <td className="societes-cell">
                       <div className="societes-list">
                         {Object.entries(jour.societes).map(([societe, data]) => (
                           <div key={societe} className="societe-item">
                             <span className="societe-nom">{societe}:</span>
                             <span className="societe-detail">
-                              {data.nombreAgents} agents - {data.prixTotal.toFixed(2)} TND
+                              {data.nombreAgents} agents - Total: {data.prixTotal.toFixed(2)} TND
+                              <br />
+                              <small>
+                                🚕 {data.prixTaxi.toFixed(2)} TND | 👨‍✈️ {data.prixAutres.toFixed(2)} TND
+                              </small>
                             </span>
                           </div>
                         ))}
