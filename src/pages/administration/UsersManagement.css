@@ -1,0 +1,41 @@
+.users-management {
+  padding: 24px;
+}
+
+.users-management-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.users-management-header h2 {
+  color: #1890ff;
+  margin-bottom: 8px;
+}
+
+.users-management-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+/* Styles pour les tables */
+.ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: 600;
+}
+
+/* Styles pour les tags de rôle */
+.ant-tag {
+  border: none;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .users-management {
+    padding: 16px;
+  }
+  
+  .ant-table {
+    font-size: 12px;
+  }
+}
