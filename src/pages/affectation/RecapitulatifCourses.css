@@ -711,6 +711,7 @@
   border-radius: 12px;
   padding: 25px;
   border: 2px solid #e2e8f0;
+  padding-right: 10px;
 }
 
 .transport-section .section-title {
@@ -735,9 +736,9 @@
 }
 
 .affectations-list-detailed {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 10px;
 }
 
 /* Cartes d'affectation détaillées */
@@ -745,10 +746,11 @@
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 25px;
+  padding: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: all 0.3s ease;
   border-left: 4px solid #9b59b6;
+  margin-bottom: 10px;
 }
 
 .affectation-card.detailed:hover {
@@ -764,11 +766,11 @@
 }
 
 .heure-detaillee {
-  background: #3498db;
+  background: #3f91c7;
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.9em;
+  font-size: 0.8em;
   font-weight: 600;
 }
 
@@ -777,7 +779,7 @@
   color: #e17055;
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.9em;
+  font-size: 0.6em;
   font-weight: 600;
 }
 
@@ -813,7 +815,7 @@
 
 .societe-count {
   color: #6c757d;
-  font-size: 0.9em;
+  font-size: 0.6em;
 }
 
 .agents-societe {
@@ -841,7 +843,7 @@
 
 .agent-adresse {
   color: #6c757d;
-  font-size: 0.9em;
+  font-size: 0.7em;
 }
 
 .repartition-details {

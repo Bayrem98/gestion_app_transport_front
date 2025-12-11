@@ -531,11 +531,13 @@ interface Chauffeur {
 interface AffectationFormPageProps {
   onAffectationAdded: () => void;
   onNavigateToValidation: () => void;
+  affectationExistante?: Affectation;
 }
 
 export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({ 
   onAffectationAdded, 
-  onNavigateToValidation 
+  onNavigateToValidation,
+  affectationExistante
 }) => {
   // Formater la date actuelle au format DD/MM/YYYY
   const getTodayFrenchFormat = (): string => {
@@ -544,9 +546,9 @@ export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({
 
   const [formData, setFormData] = useState<Partial<Affectation>>({
     chauffeur: '',
-    heure: "6",
+    heure: affectationExistante?.heure || (affectationExistante?.typeTransport === 'Ramassage' ? "6" : "22"),
     agents: [],
-    typeTransport: 'Ramassage',
+    typeTransport: affectationExistante?.typeTransport || 'Ramassage' || 'Départ',
     jour: 'Lundi',
     prixCourse: 10,
     vehicule: '',
@@ -655,6 +657,7 @@ export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({
       onAffectationAdded();
       
       // Réinitialiser le formulaire
+      if (!affectationExistante) {
       setFormData({
         chauffeur: '',
         heure: formData.typeTransport === 'Ramassage' ? "6" : "22",
@@ -665,6 +668,7 @@ export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({
         vehicule: '',
         dateReelle: formData.dateReelle,
       });
+    }
 
       setTimeout(() => setSubmitSuccess(false), 3000);
       

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { TransportApiService } from '../services/api';
 import { Affectation } from '../@types/shared';
 import './RapportFinancier.css';
+import * as XLSX from 'xlsx';
 
 interface RapportJournalier {
   date: string;
@@ -127,10 +128,16 @@ export const RapportFinancier: React.FC = () => {
       }
 
       // Calcul par société
-      const societesDansAffectation = new Set<string>();
-      aff.agents?.forEach(agent => {
-        const societe = agent.societe;
-        societesDansAffectation.add(societe);
+     const societesDansAffectation = new Set<string>();
+    aff.agents?.forEach(agent => {
+      const societe = agent.societe;
+      
+      // Si un filtre société est appliqué, ne traiter que cette société
+      if (societeFiltre && societe !== societeFiltre) {
+        return; // Ignorer les autres sociétés
+      }
+      
+      societesDansAffectation.add(societe);
 
         if (!acc[date].societes[societe]) {
           acc[date].societes[societe] = {
@@ -169,11 +176,24 @@ export const RapportFinancier: React.FC = () => {
       return acc;
     }, {} as { [date: string]: RapportJournalier });
 
-    return Object.values(parDate).sort((a, b) => 
-      new Date(b.date.split('/').reverse().join('-')).getTime() - 
-      new Date(a.date.split('/').reverse().join('-')).getTime()
-    );
-  }, [affectations, dateDebut, dateFin, societeFiltre, typeTransportFiltre, typeChauffeurFiltre]);
+    // Filtrer les résultats pour ne garder que la société sélectionnée
+  const resultats = Object.values(parDate).map(jour => {
+    if (societeFiltre) {
+      // Garder seulement la société filtrée
+      const societeFiltree = jour.societes[societeFiltre];
+      return {
+        ...jour,
+        societes: societeFiltree ? { [societeFiltre]: societeFiltree } : {}
+      };
+    }
+    return jour;
+  });
+
+  return resultats.sort((a, b) => 
+    new Date(b.date.split('/').reverse().join('-')).getTime() - 
+    new Date(a.date.split('/').reverse().join('-')).getTime()
+  );
+}, [affectations, dateDebut, dateFin, societeFiltre, typeTransportFiltre, typeChauffeurFiltre]);
 
   // Calcul des statistiques générales
   const statistiquesGenerales = useMemo((): StatistiquesGenerales => {
@@ -254,6 +274,73 @@ export const RapportFinancier: React.FC = () => {
     return Array.from(societes).sort();
   }, [affectations]);
 
+  // NOUVELLE FONCTION: Calcul des statistiques par société et type de chauffeur
+  const statistiquesParSocieteChauffeur = useMemo(() => {
+    const stats: {
+      [societe: string]: {
+        totalAffectations: number;
+        chauffeurs: {
+          [chauffeur: string]: {
+            affectations: number;
+            prixTotal: number;
+            type: string; // 'taxi' ou 'autre'
+          }
+        }
+      }
+    } = {};
+
+    const affectationsFiltrees = affectations.filter(aff => {
+      const dateAffectation = new Date(aff.dateReelle.split('/').reverse().join('-'));
+      const filtreDateDebut = dateDebut ? new Date(dateDebut) <= dateAffectation : true;
+      const filtreDateFin = dateFin ? new Date(dateFin) >= dateAffectation : true;
+      const filtreSociete = societeFiltre ? 
+        aff.agents?.some(agent => agent.societe === societeFiltre) : true;
+      const filtreTypeTransport = typeTransportFiltre ? 
+        aff.typeTransport === typeTransportFiltre : true;
+      const filtreTypeChauffeur = typeChauffeurFiltre ? 
+        (typeChauffeurFiltre === 'taxi' ? estTaxi(aff) : !estTaxi(aff)) : true;
+
+      return filtreDateDebut && filtreDateFin && filtreSociete && filtreTypeTransport && filtreTypeChauffeur;
+    });
+
+    affectationsFiltrees.forEach(aff => {
+      const typeChauffeur = estTaxi(aff) ? 'taxi' : 'autre';
+      const nomChauffeur = aff.chauffeur || 'Chauffeur inconnu';
+      
+      // Pour chaque société concernée par l'affectation
+      const societesDansAffectation = new Set<string>();
+      aff.agents?.forEach(agent => {
+        societesDansAffectation.add(agent.societe);
+      });
+
+      societesDansAffectation.forEach(societe => {
+        if (!stats[societe]) {
+          stats[societe] = {
+            totalAffectations: 0,
+            chauffeurs: {}
+          };
+        }
+
+        if (!stats[societe].chauffeurs[nomChauffeur]) {
+          stats[societe].chauffeurs[nomChauffeur] = {
+            affectations: 0,
+            prixTotal: 0,
+            type: typeChauffeur
+          };
+        }
+
+        // Répartition équitable du prix entre les sociétés
+        const prixParSociete = aff.prixCourse / societesDansAffectation.size;
+        
+        stats[societe].totalAffectations++;
+        stats[societe].chauffeurs[nomChauffeur].affectations++;
+        stats[societe].chauffeurs[nomChauffeur].prixTotal += prixParSociete;
+      });
+    });
+
+    return stats;
+  }, [affectations, dateDebut, dateFin, societeFiltre, typeTransportFiltre, typeChauffeurFiltre]);
+
   const resetFiltres = () => {
     setDateDebut('');
     setDateFin('');
@@ -262,35 +349,303 @@ export const RapportFinancier: React.FC = () => {
     setTypeChauffeurFiltre('');
   };
 
-  const exporterCSV = () => {
-    const headers = ['Date', 'Total Courses', 'Ramassages', 'Départs', 'Prix Total', 'Prix Taxi', 'Prix Autres', 'Sociétés'];
-    const csvData = rapportsJournaliers.map(jour => [
-      jour.date,
-      jour.totalAffectations.toString(),
-      jour.ramassages.toString(),
-      jour.departs.toString(),
-      jour.prixTotal.toFixed(2),
-      jour.prixTaxi.toFixed(2),
-      jour.prixAutres.toFixed(2),
-      Object.entries(jour.societes).map(([societe, data]) => 
-        `${societe}: ${data.nombreAgents} agents, Total: ${data.prixTotal.toFixed(2)} TND (Taxi: ${data.prixTaxi.toFixed(2)} TND, Autres: ${data.prixAutres.toFixed(2)} TND)`
-      ).join('; ')
-    ]);
+  const exporterExcelXLSX = () => {
+  // Créer un nouveau workbook
+  const wb = XLSX.utils.book_new();
+  
+  // ========== FEUILLE 1: DÉTAILS COMPLETS PAR AGENT ==========
+  const detailsData = [];
+  
+  // En-têtes
+  detailsData.push([
+    'Date',
+    'Société',
+    'Agent',
+    'Adresse',
+    'Type Transport',
+    'Heure',
+    'Chauffeur',
+    'Prix Course (TND)',
+  ]);
+  
+  // Parcourir toutes les affectations filtrées pour obtenir TOUTES les données
+  const affectationsFiltrees = affectations.filter(aff => {
+    const dateAffectation = new Date(aff.dateReelle.split('/').reverse().join('-'));
+    const filtreDateDebut = dateDebut ? new Date(dateDebut) <= dateAffectation : true;
+    const filtreDateFin = dateFin ? new Date(dateFin) >= dateAffectation : true;
+    const filtreSociete = societeFiltre ? 
+      aff.agents?.some(agent => agent.societe === societeFiltre) : true;
+    const filtreTypeTransport = typeTransportFiltre ? 
+      aff.typeTransport === typeTransportFiltre : true;
+    const filtreTypeChauffeur = typeChauffeurFiltre ? 
+      (typeChauffeurFiltre === 'taxi' ? estTaxi(aff) : !estTaxi(aff)) : true;
 
-    const csvContent = [headers, ...csvData]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
+    return filtreDateDebut && filtreDateFin && filtreSociete && filtreTypeTransport && filtreTypeChauffeur;
+  });
+  
+  // Grouper les affectations par date, puis par société
+  const groupedByDateSociete: {
+    [date: string]: {
+      [societe: string]: Array<{
+        agent: any;
+        affectation: Affectation;
+        prixParAgent: number;
+        estTaxi: boolean;
+      }>
+    }
+  } = {};
+  
+  affectationsFiltrees.forEach(affectation => {
+    const date = affectation.dateReelle;
+    const estTaxiAffectation = estTaxi(affectation);
+    const prixParAgent = affectation.prixCourse / (affectation.agents?.length || 1);
+    
+    affectation.agents?.forEach(agent => {
+      const societe = agent.societe;
+      
+      // Si un filtre société est appliqué, ne garder que cette société
+      if (societeFiltre && societe !== societeFiltre) {
+        return; // Ignorer les agents des autres sociétés
+      }
+      
+      if (!groupedByDateSociete[date]) {
+        groupedByDateSociete[date] = {};
+      }
+      
+      if (!groupedByDateSociete[date][societe]) {
+        groupedByDateSociete[date][societe] = [];
+      }
+      
+      groupedByDateSociete[date][societe].push({
+        agent,
+        affectation,
+        prixParAgent,
+        estTaxi: estTaxiAffectation
+      });
+    });
+  });
+  
+  // Trier les dates du plus récent au plus ancien
+  const sortedDates = Object.keys(groupedByDateSociete).sort((a, b) => {
+    const dateA = new Date(a.split('/').reverse().join('-'));
+    const dateB = new Date(b.split('/').reverse().join('-'));
+    return dateB.getTime() - dateA.getTime();
+  });
+  
+  // Ajouter les données au tableau avec formatage comme dans votre exemple
+  sortedDates.forEach((date, dateIndex) => {
+    const societes = Object.keys(groupedByDateSociete[date]);
+    
+    societes.forEach((societe, societeIndex) => {
+      const agents = groupedByDateSociete[date][societe];
+      
+      agents.forEach((item, agentIndex) => {
+        const row = [];
+        
+        // Date - seulement pour le premier agent de la première société de la date
+        if (societeIndex === 0 && agentIndex === 0) {
+          row.push(date);
+        } else {
+          row.push(''); // Cellule vide pour éviter la répétition
+        }
+        
+        // Société - seulement pour le premier agent de chaque société
+        if (agentIndex === 0) {
+          row.push(societe);
+        } else {
+          row.push(''); // Cellule vide pour éviter la répétition
+        }
+        
+        // Agent
+        row.push(item.agent.agentNom);
+        
+        // Adresse
+        row.push(item.agent.adresse);
+        
+        // Type Transport
+        row.push(item.affectation.typeTransport);
+        
+        // Heure
+        row.push(item.affectation.heure ? `${item.affectation.heure}H` : 'N/A');
+        
+        // Chauffeur (type)
+        row.push(item.estTaxi ? 'Taxi' : 'Samir');
+        
+        // Prix Course
+        row.push(item.prixParAgent.toFixed(2));
+        
+        detailsData.push(row);
+      });
+    });
+  });
+  
+  const wsDetails = XLSX.utils.aoa_to_sheet(detailsData);
+  
+  // ========== FEUILLE 2: PAR DATE ET SOCIÉTÉ ==========
+  const dateSocieteData = [];
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `rapport_financier_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+dateSocieteData.push([
+  'Date',
+  'Société',
+  'Nombre Agents',
+  'Total Prix (TND)',
+  'Taxi (TND)',
+  'Samir (TND)',
+  'Nombre Courses'
+]);
+
+let lastDate = '';
+
+rapportsJournaliers.forEach(jour => {
+    // Ne traiter que si des sociétés existent (après filtrage)
+    if (Object.keys(jour.societes).length > 0) {
+      Object.entries(jour.societes).forEach(([societe, data]) => {
+        // Si un filtre société est appliqué, vérifier qu'on a la bonne société
+        if (societeFiltre && societe !== societeFiltre) {
+          return; // Ignorer les autres sociétés
+        }
+        
+        const row = [];
+        
+        // Date - seulement pour la première société de la date
+        if (lastDate !== jour.date) {
+          row.push(jour.date);
+          lastDate = jour.date;
+        } else {
+          row.push(''); // Cellule vide
+        }
+        
+        // Société
+        row.push(societe);
+        
+        // Autres données
+        row.push(
+          data.nombreAgents,
+          data.prixTotal.toFixed(2),
+          data.prixTaxi.toFixed(2),
+          data.prixAutres.toFixed(2),
+          data.affectations
+        );
+        
+        dateSocieteData.push(row);
+      });
+    }
+  });
+
+const wsDateSociete = XLSX.utils.aoa_to_sheet(dateSocieteData);
+  
+  // ========== AJOUTER TOUTES LES FEUILLES AU WORKBOOK ==========
+  XLSX.utils.book_append_sheet(wb, wsDetails, 'Détails Agents');
+  XLSX.utils.book_append_sheet(wb, wsDateSociete, 'Par Date Société');
+  
+  // ========== APPLIQUER DES STYLES (largeurs de colonnes) ==========
+  const colWidths: { [key: string]: Array<{ wch: number }> } = {
+    'Détails Agents': [
+      { wch: 12 }, // Date
+      { wch: 20 }, // Société
+      { wch: 30 }, // Agent
+      { wch: 35 }, // Adresse
+      { wch: 15 }, // Type Transport
+      { wch: 10 }, // Heure
+      { wch: 12 }, // Chauffeur
+      { wch: 15 }, // Prix
+    ],
+    'Par Date Société': [
+      { wch: 12 }, // Date
+      { wch: 25 }, // Société
+      { wch: 15 }, // Nombre Agents
+      { wch: 15 }, // Total Prix
+      { wch: 15 }, // Taxi
+      { wch: 15 }, // Samir
+      { wch: 15 }  // Nombre Courses
+    ],
   };
+  
+  // Appliquer les largeurs de colonnes
+  Object.keys(colWidths).forEach(sheetName => {
+    const ws = wb.Sheets[sheetName];
+    if (ws) {
+      ws['!cols'] = colWidths[sheetName];
+    }
+  });
+  
+  // ========== STYLE DE FUSION POUR LA FEUILLE DÉTAILS ==========
+  // Pour fusionner les cellules de date et société (optionnel)
+  const ws = wb.Sheets['Détails Agents'];
+  
+  if (ws) {
+    // Chercher les cellules à fusionner
+    const mergeRanges: Array<{ s: { r: number; c: number }; e: { r: number; c: number } }> = [];
+    let currentDateStart = 2; // Row 2 (après l'en-tête)
+    let currentSocieteStart = 2;
+    
+    sortedDates.forEach(date => {
+      const societes = Object.keys(groupedByDateSociete[date]);
+      let dateRowCount = 0;
+      
+      societes.forEach(societe => {
+        const agentsCount = groupedByDateSociete[date][societe].length;
+        
+        // Fusion pour la société (si plus d'un agent)
+        if (agentsCount > 1) {
+          const societeEnd = currentSocieteStart + agentsCount - 1;
+          mergeRanges.push({
+            s: { r: currentSocieteStart - 1, c: 1 }, // Société colonne B (index 1)
+            e: { r: societeEnd - 1, c: 1 }
+          });
+        }
+        
+        currentSocieteStart += agentsCount;
+        dateRowCount += agentsCount;
+      });
+      
+      // Fusion pour la date (si plusieurs sociétés)
+      if (societes.length > 0 && dateRowCount > 1) {
+        const dateEnd = currentDateStart + dateRowCount - 1;
+        mergeRanges.push({
+          s: { r: currentDateStart - 1, c: 0 }, // Date colonne A (index 0)
+          e: { r: dateEnd - 1, c: 0 }
+        });
+      }
+      
+      currentDateStart += dateRowCount;
+    });
+    
+    if (mergeRanges.length > 0) {
+      ws['!merges'] = mergeRanges;
+    }
+  }
+  
+  // ========== GÉNÉRER LE NOM DU FICHIER ==========
+  let fileName = `Rapport_Transport`;
+  if (dateDebut && dateFin) fileName += `_${dateDebut}_au_${dateFin}`;
+  if (societeFiltre) fileName += `_${societeFiltre.replace(/\s+/g, '_')}`;
+  fileName += `_${new Date().toISOString().split('T')[0]}.xlsx`;
+  
+  // ========== TÉLÉCHARGER LE FICHIER ==========
+  XLSX.writeFile(wb, fileName);
+  
+  // ========== NOTIFICATION ==========
+  const totalAgents = detailsData.length - 1; // -1 pour l'en-tête
+  const totalDates = sortedDates.length;
+  
+  let message = `✅ Exportation Excel réussie !
+
+📊 Fichier: ${fileName}
+📅 Période: ${dateDebut || 'Début'} - ${dateFin || 'Fin'}
+👥 Agents exportés: ${totalAgents}
+📋 Dates couvertes: ${totalDates}`;
+
+  if (societeFiltre) {
+    message += `\n🏢 Société filtrée: ${societeFiltre}`;
+  } else {
+    message += `\n🏢 Toutes les sociétés`;
+  }
+
+  message += `\n\nLe fichier a été généré avec succès !`;
+
+  alert(message);
+};
 
   if (loading) {
     return (
@@ -309,7 +664,7 @@ export const RapportFinancier: React.FC = () => {
           <button className="btn-secondary" onClick={resetFiltres}>
             🔄 Réinitialiser
           </button>
-          <button className="btn-primary" onClick={exporterCSV}>
+          <button className="btn-primary" onClick={exporterExcelXLSX}>
             📁 Exporter CSV
           </button>
         </div>
@@ -441,7 +796,7 @@ export const RapportFinancier: React.FC = () => {
         </div>
       </div>
 
-      {/* Répartition par société */}
+      {/* Répartition par société 
       {statistiquesGenerales.societes.length > 0 && (
         <div className="societes-section">
           <h3>🏢 Répartition par Société</h3>
@@ -502,101 +857,125 @@ export const RapportFinancier: React.FC = () => {
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
-      {/* Rapport détaillé par date */}
-     <div className="rapport-detaille">
-  <h3>📅 Rapport Détaillé par Date</h3>
-  {rapportsJournaliers.length > 0 ? (
-    <div className="table-container">
-      <table className="rapport-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Total Courses</th>
-            <th>Ramassages</th>
-            <th>Départs</th>
-            <th>Prix Total</th>
-            <th>Prix Taxi</th>
-            <th>Prix Autres</th>
-            <th>Sociétés et Agents</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rapportsJournaliers.map(jour => (
-            <tr key={jour.date}>
-              <td className="date-cell">
-                <strong>{jour.date}</strong>
-              </td>
-              <td>{jour.totalAffectations}</td>
-              <td>
-                <span className="badge ramassage">{jour.ramassages}</span>
-              </td>
-              <td>
-                <span className="badge depart">{jour.departs}</span>
-              </td>
-              <td className="prix-cell">
-                <strong>{jour.prixTotal.toFixed(2)} TND</strong>
-              </td>
-              <td className="prix-taxi">
-                {jour.prixTaxi.toFixed(2)} TND
-              </td>
-              <td className="prix-autres">
-                {jour.prixAutres.toFixed(2)} TND
-              </td>
-              <td className="societes-cell">
-                <div className="societes-list">
-                  {Object.entries(jour.societes).map(([societe, data]) => (
-                    <div key={societe} className="societe-item">
-                      <div className="societe-header">
-                        <span className="societe-nom" style={{color: "white"}}>{societe}</span>
-                        <span className="societe-total">{data.prixTotal.toFixed(2)} TND</span>
-                      </div>
-                      
-                      <div className="agents-list">
-                        {data.agents.map((agent, index) => (
-                          <div key={index} className="agent-item">
-                            <div className="agent-info">
-                              <span className="agent-nom">
-                                {agent.nom}
-                              </span>
-                              <span className="agent-adresse">
-                                {agent.adresse}
-                              </span>
-                            </div>
-                            <div className="agent-repartition">
-                              <small>
-                                🚕 {((data.prixTaxi / data.nombreAgents) || 0).toFixed(2)} TND
-                              </small>
-                              <small>
-                                👨‍✈️ {((data.prixAutres / data.nombreAgents) || 0).toFixed(2)} TND
-                              </small>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="societe-summary">
-                        <small>
-                          {data.nombreAgents} agent(s)
-                        </small>
-                      </div>
+     {/* Rapport détaillé par date */}
+      <div className="rapport-detaille">
+        <h3>📅 Rapport Détaillé par Société</h3>
+        {rapportsJournaliers.length > 0 ? (
+          <div className="rapport-par-societe">
+            {rapportsJournaliers.map(jour => (
+              <div key={jour.date} className="jour-section">
+                <br />
+                {Object.entries(jour.societes).map(([societe, data]) => (
+                  <div key={`${jour.date}-${societe}`} className="societe-table-section">
+                    <div className="societe-table-header">
+                      <h5 className="societe-nom-tableau">🏢 {societe}</h5>
                     </div>
-                  ))}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    <div className="no-data">
-      <div className="no-data-icon">📭</div>
-      <p>Aucune donnée trouvée pour les filtres sélectionnés</p>
-    </div>
-  )}
-</div>
+                    <br />
+                    <div className="table-container">
+                      <table className="rapport-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Agent</th>
+                            <th>Adresse</th>
+                            <th>Type Transport</th>
+                            <th>Heure</th>
+                            <th>Type Chauffeur</th>
+                            <th>Prix Course (TND)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.agents.map((agent, index) => {
+                            // Trouver l'affectation correspondante pour cet agent
+                            const affectation = affectations.find(aff => 
+                              aff.dateReelle === jour.date && aff.heure &&
+                              aff.agents?.some(a => 
+                                a.agentNom === agent.nom && 
+                                a.societe === agent.societe
+                              )
+                            );
+                            
+                            const estTaxiAffectation = affectation ? estTaxi(affectation) : false;
+                            const prixParAgent = affectation ? 
+                              (affectation.prixCourse / (affectation.agents?.length || 1)) : 
+                              0;
+                            
+                            return (
+                              <tr key={`${jour.date}-${societe}-${agent.nom}-${index}`}>
+                                <td className="adresse-cell">
+                                  <div className="adresse-info">
+                                    <span className="adresse-icon">📅</span>
+                                    <span className="adresse-text" style={{fontSize: 18}}>{jour?.date}</span>
+                                  </div>
+                                </td>
+                                <td className="agent-cell">
+                                  <div className="agent-info-compact">
+                                    <span className="agent-icon">👤</span>
+                                    <span className="agent-nom-text">{agent.nom}</span>
+                                  </div>
+                                </td>
+                                <td className="adresse-cell">
+                                  <div className="adresse-info">
+                                    <span className="adresse-icon">📍</span>
+                                    <span className="adresse-text">{agent.adresse}</span>
+                                  </div>
+                                </td>
+                                 <td className="type-transport-cell">
+                                  <span className={`badge ${affectation?.typeTransport === 'Ramassage' ? 'ramassage' : 'depart'}`}>
+                                    {affectation?.typeTransport || 'N/A'}
+                                  </span>
+                                </td>
+                                <td className="heure-cell">
+                                  <div className="heure-info">
+                                    <span className="heure-icon">⏰</span>
+                                    <span className="heure-text" style={{fontWeight: "bold"}}>{affectation?.heure}H</span>
+                                  </div>
+                                </td>
+                                <td className="type-chauffeur-cell">
+                                  <span className={`badge ${estTaxiAffectation ? 'taxi' : 'autre'}`}>
+                                    {estTaxiAffectation ? '🚕 Taxi' : '👨‍✈️ Samir'}
+                                  </span>
+                                </td>
+                                <td className="prix-cell">
+                                  <strong>{prixParAgent.toFixed(2)} TND</strong>
+                                </td>
+                                
+                              </tr>
+                            );
+                          })}
+                          {/* Ligne de total pour cette société */}
+                          <tr className="total-row">
+                            <td colSpan={4} className="total-label">
+                              <strong>Total {societe} :</strong>
+                            </td>
+                            <td className="total-prix">
+                              <strong>{data.prixTotal.toFixed(2)} TND</strong>
+                            </td>
+                            <td colSpan={2} className="total-detail">
+                              <small>
+                                Taxi: {data.prixTaxi.toFixed(2)} TND | 
+                                Samir: {data.prixAutres.toFixed(2)} TND
+                              </small>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <br />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="no-data">
+            <div className="no-data-icon">📭</div>
+            <p>Aucune donnée trouvée pour les filtres sélectionnés</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
