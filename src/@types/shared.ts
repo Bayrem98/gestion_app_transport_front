@@ -1,4 +1,3 @@
-// Types communs entre frontend et backend
 export interface Agent {
   _id?: string;
   nom: string;
@@ -19,12 +18,6 @@ export interface Societe {
   adresse?: string;
   telephone?: string;
   matriculef?: string;
-}
-
-// types/maps
-export interface Coordinate {
-  lat: number;
-  lng: number;
 }
 
 export interface Chauffeur {

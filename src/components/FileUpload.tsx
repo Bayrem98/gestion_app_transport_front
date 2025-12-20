@@ -1,12 +1,15 @@
-import React, { useRef } from 'react';
-import './FileUpload.css';
+import React, { useRef } from "react";
+import "./FileUpload.css";
 
 interface FileUploadProps {
   onFileUpload: (file: File) => void;
   loading: boolean;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, loading }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({
+  onFileUpload,
+  loading,
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,7 +22,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, loading })
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
-    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+    if (file && (file.name.endsWith(".xlsx") || file.name.endsWith(".xls"))) {
       onFileUpload(file);
     }
   };
@@ -40,9 +43,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, loading })
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".xlsx,.xls"
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
       />
-      
+
       {loading ? (
         <div className="upload-loading">
           <div className="spinner"></div>

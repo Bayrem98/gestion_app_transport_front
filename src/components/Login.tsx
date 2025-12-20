@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Alert } from "antd";
 import { v4 as uuidv4 } from "uuid";
 import Cookies from "js-cookie";
-import './Login.css';
+import "./Login.css";
 import AuthService from "../services/authService";
 
 function Login() {
@@ -39,10 +39,10 @@ function Login() {
   };
 
   const toggleRole = (role: string) => {
-    if (role === 'admin') {
+    if (role === "admin") {
       setIsAdmin(true);
       setIsSupAdmin(false);
-    } else if (role === 'supadmin') {
+    } else if (role === "supadmin") {
       setIsAdmin(false);
       setIsSupAdmin(true);
     } else {
@@ -51,7 +51,11 @@ function Login() {
     }
   };
 
-  const login = async (event: React.FormEvent, isAdmin: boolean, isSupAdmin: boolean) => {
+  const login = async (
+    event: React.FormEvent,
+    isAdmin: boolean,
+    isSupAdmin: boolean
+  ) => {
     event.preventDefault();
     setIsLoading(true);
 
@@ -63,7 +67,7 @@ function Login() {
 
     try {
       let response;
-      
+
       if (isSupAdmin) {
         response = await AuthService.loginSupadmin(username, password);
         // Stocker le rôle Administrateur
@@ -99,13 +103,12 @@ function Login() {
 
       console.log("Connexion réussie:", response);
       console.log("Rôle utilisateur:", localStorage.getItem("user_role"));
-      
+
       // Redirection vers le dashboard
       window.location.replace("/import-agents");
-      
     } catch (error: any) {
-      console.error('Erreur de connexion:', error);
-      
+      console.error("Erreur de connexion:", error);
+
       // Gestion spécifique des erreurs d'authentification
       if (error.response?.status === 401) {
         setErrorMessage("Nom d'utilisateur ou mot de passe incorrect");
@@ -113,8 +116,10 @@ function Login() {
         setErrorMessage("Service d'authentification indisponible");
       } else if (error.response?.data?.message) {
         setErrorMessage(error.response.data.message);
-      } else if (error.message === 'Network Error') {
-        setErrorMessage("Impossible de se connecter au serveur. Vérifiez votre connexion.");
+      } else if (error.message === "Network Error") {
+        setErrorMessage(
+          "Impossible de se connecter au serveur. Vérifiez votre connexion."
+        );
       } else {
         setErrorMessage("Une erreur s'est produite. Veuillez réessayer.");
       }
@@ -146,7 +151,8 @@ function Login() {
   };
 
   const getRoleDescription = () => {
-    if (isSupAdmin) return "Accès complet à toutes les fonctionnalités et gestion des utilisateurs";
+    if (isSupAdmin)
+      return "Accès complet à toutes les fonctionnalités et gestion des utilisateurs";
     if (isAdmin) return "Accès aux fonctionnalités de comptabilité et rapports";
     return "Accès aux fonctionnalités de base de gestion du transport";
   };
@@ -209,20 +215,25 @@ function Login() {
                 </div>
               )}
 
-              <form onSubmit={(event) => login(event, isAdmin, isSupAdmin)} className="login-form">
+              <form
+                onSubmit={(event) => login(event, isAdmin, isSupAdmin)}
+                className="login-form"
+              >
                 {/* Sélection du rôle */}
                 <div className="form-group modern">
                   <label className="form-label">
-                    <FontAwesomeIcon 
-                      icon={getRoleIcon()} 
-                      className="label-icon" 
+                    <FontAwesomeIcon
+                      icon={getRoleIcon()}
+                      className="label-icon"
                       style={{ color: getRoleColor() }}
                     />
                     Rôle utilisateur
                   </label>
                   <div className="select-wrapper">
                     <select
-                      value={isSupAdmin ? "supadmin" : isAdmin ? "admin" : "user"}
+                      value={
+                        isSupAdmin ? "supadmin" : isAdmin ? "admin" : "user"
+                      }
                       onChange={(e) => toggleRole(e.target.value)}
                       className="modern-select"
                       disabled={isLoading}
@@ -234,11 +245,12 @@ function Login() {
                     <div className="select-arrow">▼</div>
                   </div>
                   <small className="field-info">
-                    Rôle sélectionné: <strong style={{ color: getRoleColor() }}>{getRoleLabel()}</strong>
+                    Rôle sélectionné:{" "}
+                    <strong style={{ color: getRoleColor() }}>
+                      {getRoleLabel()}
+                    </strong>
                   </small>
-                  <div className="role-description">
-                    {getRoleDescription()}
-                  </div>
+                  <div className="role-description">{getRoleDescription()}</div>
                 </div>
 
                 {/* Nom d'utilisateur */}
@@ -278,8 +290,8 @@ function Login() {
                       onClick={togglePasswordVisibility}
                       disabled={isLoading}
                     >
-                      <FontAwesomeIcon 
-                        icon={passwordShown ? faEyeSlash : faEye} 
+                      <FontAwesomeIcon
+                        icon={passwordShown ? faEyeSlash : faEye}
                         className="eye-icon"
                       />
                     </button>
@@ -289,7 +301,9 @@ function Login() {
                 {/* Bouton de connexion */}
                 <button
                   type="submit"
-                  className={`submit-btn modern-btn ${isLoading ? 'loading' : ''}`}
+                  className={`submit-btn modern-btn ${
+                    isLoading ? "loading" : ""
+                  }`}
                   disabled={!username || !password || isLoading}
                 >
                   {isLoading ? (
