@@ -1,9 +1,7 @@
-// src/pages/societes/GestionSocietes.tsx - Version DB
 import React, { useState, useEffect } from "react";
 import { TransportApiService } from "../../services/api";
 import { Societe } from "../../@types/shared";
 import "./GestionSocietes.css";
-import { MigrationButton } from "./utils/MigrationButton";
 
 export const GestionSocietes: React.FC = () => {
   const [societes, setSocietes] = useState<Societe[]>([]);
@@ -101,10 +99,6 @@ export const GestionSocietes: React.FC = () => {
     setShowForm(false);
   };
 
-  const handleMigrationComplete = () => {
-    loadSocietes(); // Recharger après migration
-  };
-
   const filteredSocietes = societes.filter(
     (societe) =>
       societe.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,9 +119,6 @@ export const GestionSocietes: React.FC = () => {
           {showForm ? "❌ Annuler" : "➕ Ajouter une société"}
         </button>
       </div>
-
-      {/* Bouton de migration */}
-      <MigrationButton onComplete={handleMigrationComplete} />
 
       {showForm && (
         <div className="societe-form-container">

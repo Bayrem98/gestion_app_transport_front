@@ -1,4 +1,3 @@
-// src/components/SelectSociete.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import './SelectSociete.css';
 import { Societe } from '../../@types/shared';
