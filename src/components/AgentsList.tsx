@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Agent } from '../@types/shared';
+// src/components/AgentsList.tsx - Version avec SelectSociete
+import React, { useState, useEffect } from 'react';
+import { Agent, Societe } from '../@types/shared';
 import './AgentsList.css';
+import { SelectSociete } from '../pages/societes/SelectSociete';
 
 interface AgentsListProps {
   agentsManquants: string[];
@@ -12,21 +14,45 @@ export const AgentsList: React.FC<AgentsListProps> = ({
   onAgentAdded 
 }) => {
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
+  const [selectedSocieteId, setSelectedSocieteId] = useState<string>('');
+  const [societes, setSocietes] = useState<Societe[]>([]);
+
+  useEffect(() => {
+    loadSocietes();
+  }, []);
+
+  const loadSocietes = () => {
+    const saved = localStorage.getItem('societes_locales');
+    setSocietes(saved ? JSON.parse(saved) : []);
+  };
+
+  const handleNewSociete = (societe: Societe) => {
+    const newSocietes = [...societes, societe];
+    setSocietes(newSocietes);
+    localStorage.setItem('societes_locales', JSON.stringify(newSocietes));
+  };
 
   const handleSubmit = (agentNom: string, event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     
+    // Vérifier les champs requis
+    if (!selectedSocieteId) {
+      alert('❌ Veuillez sélectionner une société');
+      return;
+    }
+
     const agentData: Partial<Agent> = {
       nom: agentNom,
       adresse: formData.get('adresse') as string,
       telephone: formData.get('telephone') as string,
-      societe: formData.get('societe') as string,
+      societe: selectedSocieteId,
       voiturePersonnelle: formData.get('voiturePersonnelle') === 'on',
     };
 
     onAgentAdded(agentData);
     setExpandedAgent(null);
+    setSelectedSocieteId('');
   };
 
   if (agentsManquants.length === 0) {
@@ -38,7 +64,7 @@ export const AgentsList: React.FC<AgentsListProps> = ({
       <h3>👥 Agents à compléter ({agentsManquants.length})</h3>
       <div className="agents-grid">
         {agentsManquants.map((agent, index) => (
-          <div key={agent} className="agent-card">
+          <div key={`${agent}-${index}`} className="agent-card">
             <div 
               className="agent-header"
               onClick={() => setExpandedAgent(expandedAgent === agent ? null : agent)}
@@ -76,11 +102,12 @@ export const AgentsList: React.FC<AgentsListProps> = ({
                 
                 <div className="form-group">
                   <label>Société *</label>
-                  <input 
-                    type="text" 
-                    name="societe" 
-                    required 
-                    placeholder="Nom de la société"
+                  <SelectSociete
+                    value={selectedSocieteId}
+                    onChange={setSelectedSocieteId}
+                    required
+                    placeholder="Sélectionnez ou créez une société"
+                    societes={societes}
                   />
                 </div>
                 

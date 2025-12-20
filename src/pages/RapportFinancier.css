@@ -675,3 +675,98 @@
     width: 100%;
   }
 }
+/* Styles pour les badges dans le tableau */
+.rapport-table-unique .badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.rapport-table-unique .badge.taxi {
+  background-color: #e3f2fd;
+  color: #b5c015;
+  border-color: #bbdefb;
+  font-size: 17px;
+}
+
+.rapport-table-unique .badge.autre {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+  border-color: #e1bee7;
+  font-size: 14px;
+}
+
+.rapport-table-unique .badge.ramassage {
+  background-color: #e8f5e9;
+  color: #080808;
+  border-color: #c8e6c9;
+}
+
+.rapport-table-unique .badge.depart {
+  background-color: #fff3e0;
+  color: #ffffff;
+  border-color: #ffe0b2;
+}
+
+/* Styles pour les badges de statistiques de société */
+.societe-stats-tableau {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.societe-stats-tableau .stat-badge {
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.societe-stats-tableau .stat-badge.taxi {
+  background-color: rgba(227, 242, 253, 0.3);
+  border-color: rgba(187, 222, 251, 0.5);
+}
+
+.societe-stats-tableau .stat-badge.autre {
+  background-color: rgba(243, 229, 245, 0.3);
+  border-color: rgba(225, 190, 231, 0.5);
+}
+
+.societe-stats-tableau .stat-badge.total {
+  background-color: rgba(232, 245, 233, 0.3);
+  border-color: rgba(200, 230, 201, 0.5);
+}
+
+/* Styles pour les informations compactes */
+.date-info, .agent-info-compact, .adresse-info, .telephone-info, .heure-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Style pour l'en-tête de société */
+.societe-table-header-unique {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 2px solid #5a67d8;
+}
+
+.societe-nom-tableau-unique {
+  color: white;
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.societe-infos-tableau-unique {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+}

@@ -150,7 +150,7 @@ export const ChauffeurPage: React.FC = () => {
   }
 
   return (
-    <div className="gestion-chauffeurs">
+    <div className="gestion-chauffeurs" style={{height: "100vh"}}>
       <div className="chauffeurs-header">
         <h1>🚐 Gestion des Chauffeurs</h1>
         <div className="header-actions">

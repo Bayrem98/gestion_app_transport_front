@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AffectationFormPage.css';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Affectation, Agent, AgentAffectation, PlanningData } from '../../@types/shared';
+import { Affectation, Agent, AgentAffectation, PlanningData, Societe } from '../../@types/shared';
 import { TransportApiService } from '../../services/api';
 import { usePlanning } from '../PlanningContext';
 
@@ -225,7 +225,7 @@ const CalendarPickerForm: React.FC<{
   );
 };
 
-// Composant AgentsSelection (identique à votre code original)
+// Composant AgentsSelection avec noms de sociétés
 const AgentsSelection: React.FC<{
   agents: Agent[];
   planningData: PlanningData[];
@@ -233,9 +233,33 @@ const AgentsSelection: React.FC<{
   jour: string;
   agentsSelectionnes: AgentAffectation[];
   onAgentsChange: (agents: AgentAffectation[]) => void;
-}> = ({ agents, planningData, typeTransport, jour, agentsSelectionnes, onAgentsChange }) => {
-  const [agentsDisponibles, setAgentsDisponibles] = useState<(Agent & { heure: number; heureAffichage: string; planning: string })[]>([]);
+  societes: Societe[]; // Ajout de sociétés
+}> = ({ agents, planningData, typeTransport, jour, agentsSelectionnes, onAgentsChange, societes }) => {
+  const [agentsDisponibles, setAgentsDisponibles] = useState<(Agent & { heure: number; heureAffichage: string; planning: string; societeNom: string })[]>([]);
   const [agentsCoches, setAgentsCoches] = useState<{ [key: string]: boolean }>({});
+
+  // Fonction pour obtenir le nom de la société
+  const getSocieteNom = (agent: Agent): string => {
+    if (!agent.societe) return 'Non spécifié';
+    
+    if (typeof agent.societe === 'object') {
+      return agent.societe.nom || 'Société inconnue';
+    } 
+    
+    // Si c'est un ID string
+    if (typeof agent.societe === 'string') {
+      if (agent.societe.match(/^[0-9a-fA-F]{24}$/)) {
+        // C'est un ObjectId, chercher le nom dans la liste des sociétés
+        const societe = societes.find(s => s._id === agent.societe);
+        return societe ? societe.nom : agent.societe;
+      } else {
+        // C'est déjà un nom de société
+        return agent.societe;
+      }
+    }
+    
+    return 'Non spécifié';
+  };
 
   useEffect(() => {
     console.log('🔍 Filtrage des salariés:', {
@@ -243,7 +267,8 @@ const AgentsSelection: React.FC<{
       planningData: planningData.length,
       typeTransport,
       jour,
-      agentsSelectionnes: agentsSelectionnes.length
+      agentsSelectionnes: agentsSelectionnes.length,
+      societes: societes.length
     });
 
     if (agents.length === 0 || planningData.length === 0) {
@@ -311,7 +336,8 @@ const AgentsSelection: React.FC<{
             ...agent,
             heure: heureCalcul,
             heureAffichage: heureAffichage,
-            planning: planningJour || ''
+            planning: planningJour || '',
+            societeNom: getSocieteNom(agent) // Ajouter le nom de société
           };
         });
 
@@ -346,7 +372,7 @@ const AgentsSelection: React.FC<{
     };
 
     filtrerAgents();
-  }, [agents, planningData, typeTransport, jour, agentsSelectionnes]);
+  }, [agents, planningData, typeTransport, jour, agentsSelectionnes, societes]);
 
   const handleCocherAgent = (agentNom: string, estCoche: boolean) => {
     setAgentsCoches(prev => ({
@@ -367,7 +393,7 @@ const AgentsSelection: React.FC<{
       agentNom: agent.nom,
       adresse: agent.adresse,
       telephone: agent.telephone,
-      societe: agent.societe
+      societe: agent.societeNom, // Utiliser le nom de société déjà transformé
     }));
 
     onAgentsChange([...agentsSelectionnes, ...nouveauxAgents]);
@@ -476,7 +502,9 @@ const AgentsSelection: React.FC<{
                     <div className="agent-info-coche">
                       <span className="agent-nom-coche">{agent.nom}</span>
                       <div className="agent-details">
-                        <span className="agent-societe-coche">{agent.societe}-</span>
+                        <span className="agent-societe-coche">
+                          {agent.societeNom}
+                        </span>
                         <span className="agent-heure">{agent.heureAffichage}</span>
                         <span className="agent-planning" title={agent.planning}>
                           📅
@@ -556,6 +584,7 @@ export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({
   });
 
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [societes, setSocietes] = useState<Societe[]>([]); // Ajout des sociétés
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -569,11 +598,13 @@ export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({
   const loadData = async () => {
     try {
       setLoading(true);
-      const [agentsData, chauffeursData] = await Promise.all([
+      const [agentsData, chauffeursData, societesData] = await Promise.all([
         TransportApiService.getAgents(),
-        TransportApiService.getChauffeurs()
+        TransportApiService.getChauffeurs(),
+        TransportApiService.getSocietes() // Charger les sociétés
       ]);
       setAgents(agentsData);
+      setSocietes(societesData);
       setChauffeurs(chauffeursData);
     } catch (error) {
       console.error('Erreur chargement données:', error);
@@ -696,7 +727,7 @@ export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({
 
   if (loading) {
     return (
-      <div className="loading-container">
+      <div className="loading-container" style={{height: "100vh"}}>
         <div className="loading">Chargement des données...</div>
       </div>
     );
@@ -844,6 +875,7 @@ export const AffectationFormPage: React.FC<AffectationFormPageProps> = ({
               jour={formData.jour!}
               agentsSelectionnes={formData.agents || []}
               onAgentsChange={handleAgentsChange}
+              societes={societes} // Passer les sociétés au composant
             />
           </div>
 

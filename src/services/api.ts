@@ -1,10 +1,17 @@
-import axios from 'axios';
-import { Agent, Affectation, PlanningData, Chauffeur } from '../@types/shared';
-import User from '../@types/User';
-import Adminuser from '../@types/Adminuser';
-import Supadmin from '../@types/Supadmin';
+import axios from "axios";
+import {
+  Agent,
+  Affectation,
+  PlanningData,
+  Chauffeur,
+  Societe,
+} from "../@types/shared";
+import User from "../@types/User";
+import Adminuser from "../@types/Adminuser";
+import Supadmin from "../@types/Supadmin";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:3001/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,7 +20,7 @@ const api = axios.create({
 // Intercepteur pour ajouter le token d'authentification
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +41,7 @@ export class TransportApiService {
 
   // Users (Utilisateurs Standard)
   static async getUsers(): Promise<User[]> {
-    const response = await api.get<User[]>('/user');
+    const response = await api.get<User[]>("/user");
     return response.data;
   }
 
@@ -44,7 +51,7 @@ export class TransportApiService {
   }
 
   static async createUser(user: Partial<User>): Promise<User> {
-    const response = await api.post<User>('/user', user);
+    const response = await api.post<User>("/user", user);
     return response.data;
   }
 
@@ -59,7 +66,7 @@ export class TransportApiService {
 
   // Adminusers (Comptabilité)
   static async getAdminusers(): Promise<Adminuser[]> {
-    const response = await api.get<Adminuser[]>('/adminuser');
+    const response = await api.get<Adminuser[]>("/adminuser");
     return response.data;
   }
 
@@ -68,12 +75,17 @@ export class TransportApiService {
     return response.data;
   }
 
-  static async createAdminuser(adminuser: Partial<Adminuser>): Promise<Adminuser> {
-    const response = await api.post<Adminuser>('/adminuser', adminuser);
+  static async createAdminuser(
+    adminuser: Partial<Adminuser>
+  ): Promise<Adminuser> {
+    const response = await api.post<Adminuser>("/adminuser", adminuser);
     return response.data;
   }
 
-  static async updateAdminuser(id: string, adminuser: Partial<Adminuser>): Promise<Adminuser> {
+  static async updateAdminuser(
+    id: string,
+    adminuser: Partial<Adminuser>
+  ): Promise<Adminuser> {
     const response = await api.put<Adminuser>(`/adminuser/${id}`, adminuser);
     return response.data;
   }
@@ -84,7 +96,7 @@ export class TransportApiService {
 
   // Supadmins (Administrateurs)
   static async getSupadmins(): Promise<Supadmin[]> {
-    const response = await api.get<Supadmin[]>('/supadmin');
+    const response = await api.get<Supadmin[]>("/supadmin");
     return response.data;
   }
 
@@ -94,11 +106,14 @@ export class TransportApiService {
   }
 
   static async createSupadmin(supadmin: Partial<Supadmin>): Promise<Supadmin> {
-    const response = await api.post<Supadmin>('/supadmin', supadmin);
+    const response = await api.post<Supadmin>("/supadmin", supadmin);
     return response.data;
   }
 
-  static async updateSupadmin(id: string, supadmin: Partial<Supadmin>): Promise<Supadmin> {
+  static async updateSupadmin(
+    id: string,
+    supadmin: Partial<Supadmin>
+  ): Promise<Supadmin> {
     const response = await api.put<Supadmin>(`/supadmin/${id}`, supadmin);
     return response.data;
   }
@@ -109,32 +124,36 @@ export class TransportApiService {
 
   // === SERVICES AUTHENTIFICATION ===
   static async login(username: string, password: string): Promise<any> {
-    const response = await api.post('/auth/login', { username, password });
+    const response = await api.post("/auth/login", { username, password });
     return response.data;
   }
 
   static async loginAdmin(username: string, password: string): Promise<any> {
-    const response = await api.post('/auth/logina', { username, password });
+    const response = await api.post("/auth/logina", { username, password });
     return response.data;
   }
 
   static async loginSupadmin(username: string, password: string): Promise<any> {
-    const response = await api.post('/auth/loginsup', { username, password });
+    const response = await api.post("/auth/loginsup", { username, password });
     return response.data;
   }
 
   static async register(userData: Partial<User>): Promise<User> {
-    const response = await api.post('/auth/register', userData);
+    const response = await api.post("/auth/register", userData);
     return response.data;
   }
 
-  static async registerAdmin(adminData: Partial<Adminuser>): Promise<Adminuser> {
-    const response = await api.post('/auth/registera', adminData);
+  static async registerAdmin(
+    adminData: Partial<Adminuser>
+  ): Promise<Adminuser> {
+    const response = await api.post("/auth/registera", adminData);
     return response.data;
   }
 
-  static async registerSupadmin(supadminData: Partial<Supadmin>): Promise<Supadmin> {
-    const response = await api.post('/auth/registersup', supadminData);
+  static async registerSupadmin(
+    supadminData: Partial<Supadmin>
+  ): Promise<Supadmin> {
+    const response = await api.post("/auth/registersup", supadminData);
     return response.data;
   }
 
@@ -142,21 +161,28 @@ export class TransportApiService {
 
   // Chauffeurs
   static async getChauffeurByNom(nom: string): Promise<Chauffeur> {
-    const response = await api.get<Chauffeur>(`/chauffeurs/nom/${encodeURIComponent(nom)}`);
+    const response = await api.get<Chauffeur>(
+      `/chauffeurs/nom/${encodeURIComponent(nom)}`
+    );
     return response.data;
   }
 
   static async getChauffeurs(): Promise<Chauffeur[]> {
-    const response = await api.get<Chauffeur[]>('/chauffeurs');
+    const response = await api.get<Chauffeur[]>("/chauffeurs");
     return response.data;
   }
 
-  static async createChauffeur(chauffeur: Partial<Chauffeur>): Promise<Chauffeur> {
-    const response = await api.post<Chauffeur>('/chauffeurs', chauffeur);
+  static async createChauffeur(
+    chauffeur: Partial<Chauffeur>
+  ): Promise<Chauffeur> {
+    const response = await api.post<Chauffeur>("/chauffeurs", chauffeur);
     return response.data;
   }
 
-  static async updateChauffeur(id: string, chauffeur: Partial<Chauffeur>): Promise<Chauffeur> {
+  static async updateChauffeur(
+    id: string,
+    chauffeur: Partial<Chauffeur>
+  ): Promise<Chauffeur> {
     const response = await api.put<Chauffeur>(`/chauffeurs/${id}`, chauffeur);
     return response.data;
   }
@@ -167,17 +193,19 @@ export class TransportApiService {
 
   // Agents
   static async getAgentByNom(nom: string): Promise<Agent> {
-    const response = await api.get<Agent>(`/agents/nom/${encodeURIComponent(nom)}`);
+    const response = await api.get<Agent>(
+      `/agents/nom/${encodeURIComponent(nom)}`
+    );
     return response.data;
   }
 
   static async getAgents(): Promise<Agent[]> {
-    const response = await api.get<Agent[]>('/agents');
+    const response = await api.get<Agent[]>("/agents");
     return response.data;
   }
 
   static async createAgent(agent: Partial<Agent>): Promise<Agent> {
-    const response = await api.post<Agent>('/agents', agent);
+    const response = await api.post<Agent>("/agents", agent);
     return response.data;
   }
 
@@ -190,24 +218,37 @@ export class TransportApiService {
     await api.delete(`/agents/${id}`);
   }
 
-  static async verifierAgentsManquants(nomsAgents: string[]): Promise<string[]> {
-    const response = await api.post<string[]>('/agents/verifier-manquants', nomsAgents);
+  static async verifierAgentsManquants(
+    nomsAgents: string[]
+  ): Promise<string[]> {
+    const response = await api.post<string[]>(
+      "/agents/verifier-manquants",
+      nomsAgents
+    );
     return response.data;
   }
 
   // Affectations
   static async getAffectations(): Promise<Affectation[]> {
-    const response = await api.get<Affectation[]>('/affectations');
+    const response = await api.get<Affectation[]>("/affectations");
     return response.data;
   }
 
-  static async createAffectation(affectation: Partial<Affectation>): Promise<Affectation> {
-    const response = await api.post<Affectation>('/affectations', affectation);
+  static async createAffectation(
+    affectation: Partial<Affectation>
+  ): Promise<Affectation> {
+    const response = await api.post<Affectation>("/affectations", affectation);
     return response.data;
   }
 
-  static async updateAffectation(id: string, affectation: Partial<Affectation>): Promise<Affectation> {
-    const response = await api.put<Affectation>(`/affectations/${id}`, affectation);
+  static async updateAffectation(
+    id: string,
+    affectation: Partial<Affectation>
+  ): Promise<Affectation> {
+    const response = await api.put<Affectation>(
+      `/affectations/${id}`,
+      affectation
+    );
     return response.data;
   }
 
@@ -218,51 +259,147 @@ export class TransportApiService {
   // Planning
   static async uploadPlanning(file: File): Promise<PlanningData[]> {
     const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await api.post<PlanningData[]>('/planning/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    formData.append("file", file);
+
+    const response = await api.post<PlanningData[]>(
+      "/planning/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
     return response.data;
   }
 
   // Importation des agents depuis un fichier CSV
   static async importAgents(file: File): Promise<{ importedCount: number }> {
-  const formData = new FormData();
-  formData.append('file', file);  // ← Créer FormData avec le File
-  
-  const response = await api.post<{ importedCount: number }>('/agents/import', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
-}
+    const formData = new FormData();
+    formData.append("file", file); // ← Créer FormData avec le File
+
+    const response = await api.post<{ importedCount: number }>(
+      "/agents/import",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  }
 
   // Statistiques
-  static async getStatistiquesMensuelles(mois?: number, annee?: number): Promise<any> {
+  static async getStatistiquesMensuelles(
+    mois?: number,
+    annee?: number
+  ): Promise<any> {
     const params = new URLSearchParams();
-    if (mois) params.append('mois', mois.toString());
-    if (annee) params.append('annee', annee.toString());
-    
-    const response = await api.get(`/affectations/statistiques/mensuelles?${params}`);
+    if (mois) params.append("mois", mois.toString());
+    if (annee) params.append("annee", annee.toString());
+
+    const response = await api.get(
+      `/affectations/statistiques/mensuelles?${params}`
+    );
     return response.data;
   }
 
   static async filtrerAgentsPlanning(
-    jour: string, 
-    typeTransport: 'Ramassage' | 'Départ'
+    jour: string,
+    typeTransport: "Ramassage" | "Départ"
   ): Promise<string[]> {
-    const response = await api.post<string[]>('/planning/filtrer-agents', {
+    const response = await api.post<string[]>("/planning/filtrer-agents", {
       jour,
-      typeTransport
+      typeTransport,
     });
     return response.data;
   }
+
+  // === SERVICES SOCIÉTÉS ===
+  static async getSocietes(): Promise<Societe[]> {
+    const response = await api.get<Societe[]>("/societe");
+    return response.data;
+  }
+
+  static async getSociete(id: string): Promise<Societe> {
+    const response = await api.get<Societe>(`/societe/${id}`);
+    return response.data;
+  }
+
+  static async createSociete(societe: Partial<Societe>): Promise<Societe> {
+    const response = await api.post<Societe>("/societe", societe);
+    return response.data;
+  }
+
+  static async updateSociete(
+    id: string,
+    societe: Partial<Societe>
+  ): Promise<Societe> {
+    const response = await api.put<Societe>(`/societe/${id}`, societe);
+    return response.data;
+  }
+
+  static async deleteSociete(id: string): Promise<void> {
+    await api.delete(`/societe/${id}`);
+  }
+
+  static async searchSocietes(query: string): Promise<Societe[]> {
+    const response = await api.get<Societe[]>(
+      `/societe/search?q=${encodeURIComponent(query)}`
+    );
+    return response.data;
+  }
+
+  // === MÉTHODE POUR MIGRER LES AGENTS ===
+  static async migrateAgentSocietes(): Promise<{
+    success: number;
+    errors: number;
+  }> {
+    try {
+      const agents = await this.getAgents();
+      let success = 0;
+      let errors = 0;
+
+      for (const agent of agents) {
+        try {
+          // Si l'agent a une société en string (ancien format)
+          if (typeof agent.societe === "string" && agent.societe !== "Non") {
+            // Chercher ou créer la société
+            const societes = await this.searchSocietes(agent.societe);
+            let societeId: string;
+
+            if (societes.length > 0) {
+              societeId = societes[0]._id!;
+            } else {
+              // Créer la société
+              const nouvelleSociete = await this.createSociete({
+                nom: agent.societe,
+              });
+              societeId = nouvelleSociete._id!;
+            }
+
+            // Mettre à jour l'agent avec l'ID de la société
+            await this.updateAgent(agent._id!, {
+              ...agent,
+              societe: societeId,
+            });
+
+            success++;
+            console.log(`✅ Agent ${agent.nom} migré`);
+          }
+        } catch (error) {
+          errors++;
+          console.error(`❌ Erreur migration agent ${agent.nom}:`, error);
+        }
+      }
+
+      return { success, errors };
+    } catch (error) {
+      console.error("Erreur migration agents:", error);
+      return { success: 0, errors: 1 };
+    }
+  }
 }
-
-
 
 export default api;

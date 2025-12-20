@@ -1,0 +1,203 @@
+/* src/components/SelectSociete.css */
+.select-societe {
+  position: relative;
+  width: 100%;
+}
+
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-input {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  background-color: white;
+}
+
+.select-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #666;
+  padding: 4px;
+  z-index: 2;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.societes-list {
+  padding: 8px 0;
+}
+
+.societe-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.societe-item:hover {
+  background-color: #f8f9fa;
+}
+
+.societe-item.selected {
+  background-color: #e8f4ff;
+  border-left: 3px solid #4a90e2;
+}
+
+.societe-item:last-child {
+  border-bottom: none;
+}
+
+.societe-name {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.societe-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: #666;
+}
+
+.societe-details span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.no-results {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.create-option {
+  border-top: 1px solid #eee;
+  padding: 8px 0;
+}
+
+.create-option-btn {
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a90e2;
+  transition: background-color 0.2s;
+}
+
+.create-option-btn:hover {
+  background-color: #f0f7ff;
+}
+
+.create-icon {
+  font-size: 16px;
+}
+
+.create-new-section {
+  border-top: 1px solid #eee;
+  background-color: #fafafa;
+}
+
+.create-new-header {
+  padding: 12px 16px;
+  background-color: #f0f7ff;
+  font-weight: 500;
+  color: #2c5282;
+  border-bottom: 1px solid #e6f2ff;
+}
+
+.create-new-form {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.new-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.new-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.create-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.create-btn {
+  flex: 1;
+  padding: 10px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.create-btn:hover:not(:disabled) {
+  background-color: #357ae8;
+}
+
+.create-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 10px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.cancel-btn:hover {
+  background-color: #5a6268;
+}

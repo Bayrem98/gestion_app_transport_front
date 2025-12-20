@@ -1,20 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Navigation } from './components/Navigation';
-import { GestionAgents } from './pages/GestionAgents';
-import './App.css';
-import { PlanningProvider } from './pages/PlanningContext';
-import { ImportAgents } from './pages/ImportAgents';
-import { ChauffeurPage } from './pages/ChauffeurPage';
-import { RapportFinancier } from './pages/RapportFinancier';
-import { SpeedInsights } from "@vercel/speed-insights/react"
-import Login from './components/Login';
-import UsersManagement from './pages/administration/UsersManagement';
-import Unauthorized from './components/Unauthorized';
-import ProtectedRoute, { UserRole } from './pages/ProtectedRoute';
-import TrajectoriesPage from './pages/TrajectoriesPage';
-import { AffectationManager } from './pages/affectation/AffectationManager';
-import { AffectationValidationPage } from './pages/affectation/AffectationValidationPage';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Navigation } from "./components/Navigation";
+import { GestionAgents } from "./pages/GestionAgents";
+import "./App.css";
+import { PlanningProvider } from "./pages/PlanningContext";
+import { ImportAgents } from "./pages/ImportAgents";
+import { ChauffeurPage } from "./pages/ChauffeurPage";
+import { RapportFinancier } from "./pages/RapportFinancier";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import Login from "./components/Login";
+import UsersManagement from "./pages/administration/UsersManagement";
+import Unauthorized from "./components/Unauthorized";
+import ProtectedRoute, { UserRole } from "./pages/ProtectedRoute";
+import { AffectationManager } from "./pages/affectation/AffectationManager";
+import { AffectationValidationPage } from "./pages/affectation/AffectationValidationPage";
+import { GestionSocietes } from "./pages/societes/GestionSocietes";
 
 enum WebsiteRoute {
   LOGIN = "/",
@@ -26,31 +26,34 @@ enum WebsiteRoute {
   VALIDATION = "/validation",
   RAPPORTS = "/rapports",
   UNAUTHORIZED = "/unauthorized",
-  TRAJECTORIES = "/trajectories"
+  TRAJECTORIES = "/trajectories",
+  SOCIETE = "/societes",
 }
 
 // Configuration des accès par rôle
 const ROLE_ACCESS: Record<UserRole, WebsiteRoute[]> = {
-  'Administrateur': [
+  Administrateur: [
     WebsiteRoute.DASHBOARD,
     WebsiteRoute.CHAUFFEURS,
     WebsiteRoute.AGENTS,
     WebsiteRoute.AFFECTATION,
     WebsiteRoute.VALIDATION,
     WebsiteRoute.RAPPORTS,
-    WebsiteRoute.USERS
+    WebsiteRoute.USERS,
+    WebsiteRoute.SOCIETE,
   ],
-  'Comptabilité': [
+  Comptabilité: [
     WebsiteRoute.DASHBOARD,
     WebsiteRoute.VALIDATION,
-    WebsiteRoute.RAPPORTS
+    WebsiteRoute.RAPPORTS,
   ],
-  'Utilisateur': [
+  Utilisateur: [
     WebsiteRoute.DASHBOARD,
     WebsiteRoute.CHAUFFEURS,
     WebsiteRoute.AGENTS,
     WebsiteRoute.AFFECTATION,
-  ]
+    WebsiteRoute.SOCIETE,
+  ],
 };
 
 function App() {
@@ -60,85 +63,114 @@ function App() {
         <div className="app">
           <Routes>
             <Route path={WebsiteRoute.LOGIN} element={<Login />} />
-            
-            
           </Routes>
-          
+
           {localStorage.getItem("access_token") && (
             <>
               <Navigation />
               <main className="main-content">
                 <Routes>
-                  <Route path={WebsiteRoute.UNAUTHORIZED} element={<Unauthorized />} />
-                  <Route path={WebsiteRoute.TRAJECTORIES} element={<TrajectoriesPage />} />
+                  <Route
+                    path={WebsiteRoute.UNAUTHORIZED}
+                    element={<Unauthorized />}
+                  />
+
                   {/* Routes pour Administrateur (accès complet) */}
-                  <Route 
-                    path={WebsiteRoute.USERS} 
+                  <Route
+                    path={WebsiteRoute.USERS}
                     element={
-                      <ProtectedRoute allowedRoles={['Administrateur']}>
+                      <ProtectedRoute allowedRoles={["Administrateur"]}>
                         <UsersManagement />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
 
                   {/* Routes pour tous les rôles */}
-                  <Route 
-                    path={WebsiteRoute.DASHBOARD} 
+                  <Route
+                    path={WebsiteRoute.DASHBOARD}
                     element={
-                      <ProtectedRoute allowedRoles={['Utilisateur', 'Administrateur', 'Comptabilité']}>
+                      <ProtectedRoute
+                        allowedRoles={[
+                          "Utilisateur",
+                          "Administrateur",
+                          "Comptabilité",
+                        ]}
+                      >
                         <ImportAgents />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  
-                  <Route 
-                    path={WebsiteRoute.CHAUFFEURS} 
+
+                  {/* Routes pour Utilisateur et Administrateur */}
+                  <Route
+                    path={WebsiteRoute.SOCIETE}
                     element={
-                      <ProtectedRoute allowedRoles={['Utilisateur', 'Administrateur']}>
+                      <ProtectedRoute
+                        allowedRoles={["Utilisateur", "Administrateur"]}
+                      >
+                        <GestionSocietes />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path={WebsiteRoute.CHAUFFEURS}
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={["Utilisateur", "Administrateur"]}
+                      >
                         <ChauffeurPage />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  
-                  <Route 
-                    path={WebsiteRoute.AGENTS} 
+
+                  <Route
+                    path={WebsiteRoute.AGENTS}
                     element={
-                      <ProtectedRoute allowedRoles={['Utilisateur', 'Administrateur']}>
+                      <ProtectedRoute
+                        allowedRoles={["Utilisateur", "Administrateur"]}
+                      >
                         <GestionAgents />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  
-                  <Route 
-                    path={WebsiteRoute.AFFECTATION} 
+
+                  <Route
+                    path={WebsiteRoute.AFFECTATION}
                     element={
-                      <ProtectedRoute allowedRoles={['Utilisateur', 'Administrateur']}>
+                      <ProtectedRoute
+                        allowedRoles={["Utilisateur", "Administrateur"]}
+                      >
                         <AffectationManager />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
 
                   {/* Routes pour Comptabilité et Administrateur */}
-                  <Route 
-                    path={WebsiteRoute.VALIDATION} 
+                  <Route
+                    path={WebsiteRoute.VALIDATION}
                     element={
-                      <ProtectedRoute allowedRoles={['Comptabilité', 'Administrateur']}>
+                      <ProtectedRoute
+                        allowedRoles={["Comptabilité", "Administrateur"]}
+                      >
                         <AffectationValidationPage />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
 
                   {/* Routes pour Comptabilité et Administrateur */}
-                  <Route 
-                    path={WebsiteRoute.RAPPORTS} 
+                  <Route
+                    path={WebsiteRoute.RAPPORTS}
                     element={
-                      <ProtectedRoute allowedRoles={['Comptabilité', 'Administrateur']}>
+                      <ProtectedRoute
+                        allowedRoles={["Comptabilité", "Administrateur"]}
+                      >
                         <RapportFinancier />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
                 </Routes>
-                <SpeedInsights/>
+                <SpeedInsights />
               </main>
             </>
           )}

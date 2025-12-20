@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TransportApiService } from '../services/api';
-import { Agent, PlanningData } from '../@types/shared';
+import { Agent, PlanningData, Societe } from '../@types/shared'; // Ajout de Societe
 import { FileUpload } from '../components/FileUpload';
 import { usePlanning } from './PlanningContext';
 import './ImportAgents.css';
@@ -48,7 +48,7 @@ interface AgentFiltre {
   nom: string;
   adresse: string;
   telephone: string;
-  societe: string;
+  societe: string; // Toujours le nom de la société pour l'affichage
   voiturePersonnelle: boolean;
   heure: number;
   heureAffichage: string;
@@ -56,6 +56,7 @@ interface AgentFiltre {
   chauffeurNom?: string;
   vehiculeChauffeur?: string;
   createdAt?: string;
+  societeId?: string; // Ajout de l'ID de société pour la sauvegarde
 }
 
 export const ImportAgents: React.FC = () => {
@@ -66,6 +67,7 @@ export const ImportAgents: React.FC = () => {
     return savedData ? JSON.parse(savedData) : [];
   });
   const [agentsExistants, setAgentsExistants] = useState<Agent[]>([]);
+  const [societes, setSocietes] = useState<Societe[]>([]); // Ajout des sociétés
   const [loading, setLoading] = useState(false);
   const [imported, setImported] = useState(() => {
     const savedImported = localStorage.getItem('importedStatus');
@@ -78,13 +80,24 @@ export const ImportAgents: React.FC = () => {
       jour: 'Lundi'
     };
   });
-  const [forceUpdate, setForceUpdate] = useState(0); // Pour forcer le recalcul
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   const { setPlanningData: setGlobalPlanningData } = usePlanning();
 
   useEffect(() => {
     chargerAgentsExistants();
+    chargerSocietes();
   }, []);
+
+  // Charger les sociétés
+  const chargerSocietes = async () => {
+    try {
+      const societesData = await TransportApiService.getSocietes();
+      setSocietes(societesData);
+    } catch (error) {
+      console.error('Erreur chargement sociétés:', error);
+    }
+  };
 
   // Sauvegarder les données dans le localStorage à chaque modification
   useEffect(() => {
@@ -109,11 +122,42 @@ export const ImportAgents: React.FC = () => {
     try {
       const agents = await TransportApiService.getAgents();
       setAgentsExistants(agents);
-      // Forcer le recalcul après chargement des Salariés
       setForceUpdate(prev => prev + 1);
     } catch (error) {
       console.error('Erreur chargement Salariés existants:', error);
     }
+  };
+
+  // Fonction pour obtenir le nom de société d'un agent
+  const getSocieteNom = (agent: Agent): string => {
+    if (!agent.societe) return 'Non';
+    
+    if (typeof agent.societe === 'object') {
+      return agent.societe.nom || 'Non';
+    }
+    
+    // Si c'est un ID string
+    if (typeof agent.societe === 'string') {
+      if (agent.societe.match(/^[0-9a-fA-F]{24}$/)) {
+        // C'est un ObjectId, chercher le nom dans la liste des sociétés
+        const societe = societes.find(s => s._id === agent.societe);
+        return societe ? societe.nom : agent.societe;
+      } else {
+        // C'est déjà un nom de société
+        return agent.societe;
+      }
+    }
+    
+    return 'Non';
+  };
+
+  // Fonction pour obtenir l'ID de société à partir du nom
+  const getSocieteId = (societeNom: string): string => {
+    if (!societeNom || societeNom === 'Non') return '';
+    
+    // Chercher dans les sociétés existantes
+    const societeExistante = societes.find(s => s.nom === societeNom);
+    return societeExistante ? societeExistante._id! : '';
   };
 
   const trouverAgentComplet = (nom: string): Agent | undefined => {
@@ -122,7 +166,6 @@ export const ImportAgents: React.FC = () => {
 
   // Fonction pour vérifier les données manquantes
   const verifierDonneesManquantes = (agent: AgentFiltre): boolean => {
-    // Vérifier si les champs sont vides ou contiennent "Non"
     const adresseManquante = !agent.adresse || 
                             agent.adresse === 'Non' || 
                             agent.adresse.trim() === '';
@@ -137,7 +180,6 @@ export const ImportAgents: React.FC = () => {
     
     const resultat = adresseManquante || telephoneManquant || societeManquante;
     
-    // Debug logging pour les agents à compléter
     if (resultat) {
       console.log(`🔍 ${agent.nom} - À compléter:`, {
         adresse: `"${agent.adresse}" -> ${adresseManquante ? 'MANQUANTE' : 'OK'}`,
@@ -148,6 +190,30 @@ export const ImportAgents: React.FC = () => {
     
     return resultat;
   };
+
+  // Déclarer extraireAgentsDuPlanning au niveau racine avec useCallback
+  const extraireAgentsDuPlanning = useCallback((planningData: PlanningData[]): AgentFiltre[] => {
+    return planningData.map(planning => {
+      const agentComplet = trouverAgentComplet(planning.Salarie);
+      const societeNom = agentComplet ? getSocieteNom(agentComplet) : 'Non';
+      
+      return {
+        _id: agentComplet?._id,
+        nom: planning.Salarie,
+        adresse: agentComplet?.adresse || 'Non',
+        telephone: agentComplet?.telephone || 'Non',
+        societe: societeNom,
+        societeId: agentComplet?.societe ? (typeof agentComplet.societe === 'object' ? agentComplet.societe._id : agentComplet.societe) : '',
+        voiturePersonnelle: agentComplet?.voiturePersonnelle || false,
+        chauffeurNom: agentComplet?.chauffeurNom,
+        vehiculeChauffeur: agentComplet?.vehiculeChauffeur,
+        heure: 0,
+        heureAffichage: '0H',
+        planning: '',
+        createdAt: agentComplet?.createdAt
+      };
+    });
+  }, [trouverAgentComplet, societes]);
 
   const handleFileUpload = useCallback(async (file: File) => {
     setLoading(true);
@@ -167,28 +233,7 @@ export const ImportAgents: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [setGlobalPlanningData, agentsExistants]);
-
-  const extraireAgentsDuPlanning = (planningData: PlanningData[]): AgentFiltre[] => {
-    return planningData.map(planning => {
-      const agentComplet = trouverAgentComplet(planning.Salarie);
-      
-      return {
-        _id: agentComplet?._id,
-        nom: planning.Salarie,
-        adresse: agentComplet?.adresse || 'Non',
-        telephone: agentComplet?.telephone || 'Non',
-        societe: agentComplet?.societe || 'Non',
-        voiturePersonnelle: agentComplet?.voiturePersonnelle || false,
-        chauffeurNom: agentComplet?.chauffeurNom,
-        vehiculeChauffeur: agentComplet?.vehiculeChauffeur,
-        heure: 0,
-        heureAffichage: '0H',
-        planning: '',
-        createdAt: agentComplet?.createdAt
-      };
-    });
-  };
+  }, [setGlobalPlanningData, extraireAgentsDuPlanning]);
 
   // Fonction de tri personnalisée pour les heures
   const trierParHeure = (a: AgentFiltre, b: AgentFiltre): number => {
@@ -219,7 +264,8 @@ export const ImportAgents: React.FC = () => {
     return a.heure - b.heure;
   };
 
-  const filtrerAgents = (): AgentFiltre[] => {
+  // Déclarer filtrerAgents comme useCallback
+  const filtrerAgents = useCallback((): AgentFiltre[] => {
     if (!planningData.length) return [];
 
     const agentsFiltres = planningData
@@ -240,7 +286,6 @@ export const ImportAgents: React.FC = () => {
         const planningJour = planning[filtres.jour as keyof PlanningData] as string;
         const heures = extraireHeuresPlanning(planningJour);
         
-        // TOUJOURS chercher l'agent le plus récent dans la base
         const agentComplet = trouverAgentComplet(planning.Salarie);
         
         let heureCalcul: number;
@@ -249,14 +294,18 @@ export const ImportAgents: React.FC = () => {
         } else {
           heureCalcul = heures?.heureFin ? normaliserHeureAffichage(heures.heureFin) : 0;
         }
+
+        const societeNom = agentComplet ? getSocieteNom(agentComplet) : 'Non';
+        const societeId = agentComplet?.societe ? 
+          (typeof agentComplet.societe === 'object' ? agentComplet.societe._id : agentComplet.societe) : '';
         
-        // Utiliser les données de la base si disponibles, sinon "Non"
         return {
           _id: agentComplet?._id,
           nom: planning.Salarie,
           adresse: agentComplet?.adresse || 'Non',
           telephone: agentComplet?.telephone || 'Non',
-          societe: agentComplet?.societe || 'Non',
+          societe: societeNom,
+          societeId: societeId,
           voiturePersonnelle: agentComplet?.voiturePersonnelle || false,
           chauffeurNom: agentComplet?.chauffeurNom || '',
           vehiculeChauffeur: agentComplet?.vehiculeChauffeur || '',
@@ -268,14 +317,14 @@ export const ImportAgents: React.FC = () => {
       });
 
     return agentsFiltres.sort(trierParHeure);
-  };
+  }, [planningData, filtres, trouverAgentComplet, societes]);
 
   // Utiliser useMemo pour optimiser le recalcul
   const agentsFiltres = useMemo(() => {
     return filtrerAgents();
-  }, [planningData, filtres, agentsExistants, forceUpdate]);
+  }, [filtrerAgents, forceUpdate]);
 
-  // Debug useEffect pour voir l'état après sauvegarde - PLACÉ APRÈS LA DÉCLARATION DE agentsFiltres
+  // Debug useEffect pour voir l'état après sauvegarde
   useEffect(() => {
     if (agentsFiltres.length > 0) {
       console.log('=== État actuel des Salariés ===');
@@ -284,7 +333,7 @@ export const ImportAgents: React.FC = () => {
         console.log(`${agent.nom}: ${statut}`, {
           adresse: `"${agent.adresse}"`,
           telephone: `"${agent.telephone}"`,
-          societe: `"${agent.societe}"`,
+          societe: `"${agent.societe}" (ID: ${agent.societeId})`,
           _id: agent._id
         });
       });
@@ -383,107 +432,153 @@ export const ImportAgents: React.FC = () => {
     }
   };
 
-  const handleSaveToDatabase = async () => {
-  try {
-    // Sauvegarder tous les agents qui ne sont pas encore dans la base
-    const agentsASauvegarder = agentsFiltres.filter(agent => !agent._id);
-
-    if (agentsASauvegarder.length === 0) {
-      alert('✅ Tous les salariés sont déjà dans la base de données !');
-      return;
+  const trouverOuCreerSociete = useCallback(async (nomSociete: string): Promise<string> => {
+    try {
+      // Chercher d'abord la société par nom
+      const societes = await TransportApiService.searchSocietes(nomSociete);
+      if (societes.length > 0) {
+        return societes[0]._id!;
+      }
+      
+      // Si non trouvée, créer une nouvelle société
+      const nouvelleSociete = await TransportApiService.createSociete({
+        nom: nomSociete
+      });
+      
+      return nouvelleSociete._id!;
+    } catch (error) {
+      console.error('Erreur gestion société:', error);
+      throw error;
     }
+  }, []);
 
-    let sauvegardes = 0;
-    let erreurs = 0;
-    
-    for (const agent of agentsASauvegarder) {
-      try {
-        // CORRECTION : Utiliser "Non" au lieu de chaînes vides pour les champs manquants
-        const agentToSave: Partial<Agent> = {
-          nom: agent.nom.trim(),
-          // Garder "Non" pour les champs manquants au lieu de chaînes vides
-          adresse: agent.adresse && agent.adresse !== 'Non' ? agent.adresse.trim() : 'Non',
-          telephone: agent.telephone && agent.telephone !== 'Non' ? agent.telephone.trim() : 'Non',
-          societe: agent.societe && agent.societe !== 'Non' ? agent.societe.trim() : 'Non',
-          voiturePersonnelle: agent.voiturePersonnelle || false,
-          chauffeurNom: agent.chauffeurNom?.trim() || '',
-          vehiculeChauffeur: agent.vehiculeChauffeur?.trim() || ''
-        };
+  const handleSaveToDatabase = async () => {
+    try {
+      const agentsASauvegarder = agentsFiltres.filter(agent => !agent._id);
 
-        // Vérifier que le nom n'est pas vide
-        if (!agentToSave.nom || agentToSave.nom.trim() === '') {
-          console.warn(`Nom du salarié vide pour: ${agent.nom}`);
-          continue;
-        }
+      if (agentsASauvegarder.length === 0) {
+        alert('✅ Tous les salariés sont déjà dans la base de données !');
+        return;
+      }
 
-        console.log('Envoi des données corrigées:', agentToSave);
-        
-        await TransportApiService.createAgent(agentToSave);
-        sauvegardes++;
-        
-        // Petite pause pour éviter de surcharger le serveur
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-      } catch (error: any) {
-        erreurs++;
-        console.error(`Erreur détaillée sauvegarde agent ${agent.nom}:`, error);
-        
-        // Afficher plus de détails sur l'erreur
-        if (error.response) {
-          console.error('Réponse erreur:', error.response.data);
-          console.error('Status:', error.response.status);
-        }
-        
-        // Si c'est une erreur de duplication, on continue
-        if (error.response?.status === 400 || error.response?.status === 409) {
-          console.warn(`Salarié ${agent.nom} existe peut-être déjà`);
+      let sauvegardes = 0;
+      let erreurs = 0;
+      
+      for (const agent of agentsASauvegarder) {
+        try {
+          // Déterminer l'ID de la société
+          let societeId = '';
+          if (agent.societe !== 'Non') {
+            // Chercher d'abord l'ID existant
+            if (agent.societeId && agent.societeId.match(/^[0-9a-fA-F]{24}$/)) {
+              societeId = agent.societeId;
+            } else {
+              // Sinon, chercher ou créer la société
+              societeId = await trouverOuCreerSociete(agent.societe);
+            }
+          }
+          
+          const agentToSave: Partial<Agent> = {
+            nom: agent.nom.trim(),
+            adresse: agent.adresse && agent.adresse !== 'Non' ? agent.adresse.trim() : 'Non',
+            telephone: agent.telephone && agent.telephone !== 'Non' ? agent.telephone.trim() : 'Non',
+            voiturePersonnelle: agent.voiturePersonnelle || false,
+            chauffeurNom: agent.chauffeurNom?.trim() || '',
+            vehiculeChauffeur: agent.vehiculeChauffeur?.trim() || ''
+          };
+
+          // Ajouter la société seulement si elle existe
+          if (societeId) {
+            agentToSave.societe = societeId;
+          } else if (agent.societe !== 'Non') {
+            // Si pas d'ID mais un nom de société, utiliser le nom comme string
+            agentToSave.societe = agent.societe;
+          }
+
+          if (!agentToSave.nom || agentToSave.nom.trim() === '') {
+            console.warn(`Nom du salarié vide pour: ${agent.nom}`);
+            continue;
+          }
+
+          console.log('Envoi des données corrigées:', agentToSave);
+          
+          await TransportApiService.createAgent(agentToSave);
+          sauvegardes++;
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+        } catch (error: any) {
+          erreurs++;
+          console.error(`Erreur détaillée sauvegarde agent ${agent.nom}:`, error);
+          
+          if (error.response) {
+            console.error('Réponse erreur:', error.response.data);
+            console.error('Status:', error.response.status);
+          }
+          
+          if (error.response?.status === 400 || error.response?.status === 409) {
+            console.warn(`Salarié ${agent.nom} existe peut-être déjà`);
+          }
         }
       }
+      
+      await chargerAgentsExistants();
+      await chargerSocietes(); // Recharger les sociétés
+      
+      if (erreurs > 0) {
+        alert(`✅ ${sauvegardes} Salarié sauvegardés, ❌ ${erreurs} erreurs.\nVérifiez la console pour les détails.`);
+      } else {
+        alert(`✅ ${sauvegardes} Salarié sauvegardés avec succès !\nLes salariés avec des données manquantes restent "À compléter".`);
+      }
+      
+    } catch (error) {
+      console.error('Erreur générale sauvegarde salariés:', error);
+      alert('❌ Erreur lors de la sauvegarde des salariés. Vérifiez la console.');
     }
-    
-    // Recharger les agents et forcer le recalcul
-    await chargerAgentsExistants();
-    
-    if (erreurs > 0) {
-      alert(`✅ ${sauvegardes} Salarié sauvegardés, ❌ ${erreurs} erreurs.\nVérifiez la console pour les détails.`);
-    } else {
-      alert(`✅ ${sauvegardes} Salarié sauvegardés avec succès !\nLes salariés avec des données manquantes restent "À compléter".`);
-    }
-    
-  } catch (error) {
-    console.error('Erreur générale sauvegarde salariés:', error);
-    alert('❌ Erreur lors de la sauvegarde des salariés. Vérifiez la console.');
-  }
-};
+  };
 
-  const handleEditAgent = (agent: AgentFiltre) => {
+  // CORRECTION: Déclarer handleEditAgent comme useCallback au niveau racine
+  const handleEditAgent = useCallback(async (agent: AgentFiltre) => {
     if (agent._id) {
       navigate(`/agents?edit=${agent._id}&returnTo=import`);
     } else {
-      const saveAndRedirect = async () => {
-        try {
-          const agentToSave: Partial<Agent> = {
-            nom: agent.nom,
-            adresse: agent.adresse !== 'Non' ? agent.adresse : '',
-            telephone: agent.telephone !== 'Non' ? agent.telephone : '',
-            societe: agent.societe !== 'Non' ? agent.societe : '',
-            voiturePersonnelle: agent.voiturePersonnelle,
-            chauffeurNom: agent.chauffeurNom,
-            vehiculeChauffeur: agent.vehiculeChauffeur
-          };
-          
-          const nouveauAgent = await TransportApiService.createAgent(agentToSave);
-          await chargerAgentsExistants();
-          navigate(`/agents?edit=${nouveauAgent._id}&returnTo=import`);
-        } catch (error) {
-          console.error('Erreur sauvegarde agent:', error);
-          alert('❌ Erreur lors de la sauvegarde de l\'agent');
+      try {
+        // Déterminer l'ID de la société
+        let societeId = '';
+        if (agent.societe !== 'Non') {
+          if (agent.societeId && agent.societeId.match(/^[0-9a-fA-F]{24}$/)) {
+            societeId = agent.societeId;
+          } else {
+            societeId = await trouverOuCreerSociete(agent.societe);
+          }
         }
-      };
-      
-      saveAndRedirect();
+        
+        const agentToSave: Partial<Agent> = {
+          nom: agent.nom,
+          adresse: agent.adresse !== 'Non' ? agent.adresse : '',
+          telephone: agent.telephone !== 'Non' ? agent.telephone : '',
+          voiturePersonnelle: agent.voiturePersonnelle,
+          chauffeurNom: agent.chauffeurNom,
+          vehiculeChauffeur: agent.vehiculeChauffeur
+        };
+
+        // Ajouter la société seulement si elle existe
+        if (societeId) {
+          agentToSave.societe = societeId;
+        } else if (agent.societe !== 'Non') {
+          agentToSave.societe = agent.societe;
+        }
+        
+        const nouveauAgent = await TransportApiService.createAgent(agentToSave);
+        await chargerAgentsExistants();
+        await chargerSocietes(); // Recharger les sociétés
+        navigate(`/agents?edit=${nouveauAgent._id}&returnTo=import`);
+      } catch (error) {
+        console.error('Erreur sauvegarde agent:', error);
+        alert('❌ Erreur lors de la sauvegarde de l\'agent');
+      }
     }
-  };
+  }, [navigate, trouverOuCreerSociete, chargerAgentsExistants]);
 
   const handleResetImport = () => {
     if (window.confirm('Êtes-vous sûr de vouloir réinitialiser l\'import ? Toutes les données seront perdues.')) {
@@ -505,7 +600,6 @@ export const ImportAgents: React.FC = () => {
     const csvRows = [headers.join(';')];
     
     data.forEach(agent => {
-      const statut = !verifierDonneesManquantes(agent) ? 'Complet' : 'À compléter';
       const row = [
         agent.nom,
         agent.heureAffichage,

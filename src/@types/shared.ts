@@ -4,13 +4,21 @@ export interface Agent {
   nom: string;
   adresse: string;
   telephone: string;
-  societe: string;
+  societe: Societe | string;
   voiturePersonnelle: boolean;
   chauffeurNom?: string;
   vehiculeChauffeur?: string;
   createdAt?: string;
   latitude?: number;
   longitude?: number;
+}
+
+export interface Societe {
+  _id?: string;
+  nom: string;
+  adresse?: string;
+  telephone?: string;
+  matriculef?: string;
 }
 
 // types/maps
@@ -42,12 +50,12 @@ export interface Affectation {
   heure: string;
   agents: AgentAffectation[];
   vehicule: string;
-  typeTransport: 'Ramassage' | 'Départ';
+  typeTransport: "Ramassage" | "Départ";
   jour: string;
   dateAjout: string;
   dateReelle: string;
   prixCourse: number;
-  statutPaiement: 'Non payé' | 'Payé';
+  statutPaiement: "Non payé" | "Payé";
   createdAt?: string;
 }
 

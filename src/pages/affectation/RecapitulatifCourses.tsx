@@ -312,12 +312,16 @@ const AffectationDetaillee: React.FC<{
           </div>
         </div>
 
-        <div className="detail-row">
+        <div className="detail-row" style={{display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',}}>
           <span className="detail-label">💰 Prix total:</span>
           <span className="detail-value prix">{affectation.prixCourse} TND</span>
         </div>
-
-        <div className="detail-row">
+         <br />
+        <div className="detail-row" style={{display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',}}>
           <span className="detail-label">📊 Répartition du prix:</span>
           <div className="repartition-details">
             {repartitionSocietes.map((item, index) => {
@@ -330,13 +334,17 @@ const AffectationDetaillee: React.FC<{
             })}
           </div>
         </div>
-
-        <div className="detail-row">
+         <br />
+        <div className="detail-row" style={{display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',}}>
           <span className="detail-label">📅 Date réelle:</span>
           <span className="detail-value">{affectation.dateReelle}</span>
         </div>
 
-        <div className="detail-row">
+        <div className="detail-row" style={{display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',}}>
           <span className="detail-label">📅 Date d'ajout:</span>
           <span className="detail-value">{affectation.dateAjout}</span>
         </div>
@@ -556,7 +564,7 @@ export const RecapitulatifCourses: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
+      <div className="loading-container" style={{height: "100vh"}}>
         <div className="loading">Chargement des données...</div>
       </div>
     );
